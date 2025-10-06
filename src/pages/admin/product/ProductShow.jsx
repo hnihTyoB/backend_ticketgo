@@ -114,7 +114,12 @@ export default function ProductShow() {
                   <td className="px-6 py-4">
                     {product.fullName || product.name}
                   </td>
-                  <td className="px-6 py-4">{product.price}</td>
+                  <td className="px-6 py-4">
+                    {new Intl.NumberFormat("vi-VN", {
+                      style: "currency",
+                      currency: "VND",
+                    }).format(product.price)}
+                  </td>
                   <td className="px-6 py-4">{product.factory || "N/A"}</td>
                   <td className="px-6 py-4">
                     <div className="flex gap-2">

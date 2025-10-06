@@ -32,3 +32,10 @@ export const findOrderById = async (id) => {
         }
     })
 };
+
+export const modifyStatus = async (id, status) => {
+    return await prisma.order.update({
+        where: { id: parseInt(id) },
+        data: { status },
+    });
+};

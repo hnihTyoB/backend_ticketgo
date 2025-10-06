@@ -83,9 +83,11 @@ export default function UserCreate() {
           </li>
           <li>
             <Link to="/admin/users" className="text-blue-600 hover:underline">
-              User
+              Users
             </Link>
+            <span className="ms-2">/</span>
           </li>
+          <li className="text-gray-700">Create A User</li>
         </ol>
       </nav>
 

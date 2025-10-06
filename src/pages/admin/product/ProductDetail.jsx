@@ -107,14 +107,16 @@ export default function ProductDetail() {
               to="/admin/products"
               className="text-blue-600 hover:underline"
             >
-              Product
+              Products
             </Link>
+            <span className="ms-2">/</span>
           </li>
+          <li className="text-gray-700">Product Details</li>
         </ol>
       </nav>
 
       <h5 className="text-lg font-semibold mb-6 max-w-lg mx-auto">
-        Detail Product
+        Product Details
       </h5>
 
       {/* Error */}

@@ -8,6 +8,7 @@ import ProductShow from "./pages/admin/product/ProductShow";
 import ProductDetail from "./pages/admin/product/ProductDetail";
 import ProductCreate from "./pages/admin/product/ProductCreate";
 import OrderShow from "./pages/admin/order/OrderShow";
+import OrderDetail from "./pages/admin/order/OrderDetail";
 
 function App() {
   return (
@@ -22,7 +23,7 @@ function App() {
           <Route path="/admin/product-detail/:id" element={<ProductDetail />} />
           <Route path="/admin/product-create" element={<ProductCreate />} />
           <Route path="/admin/orders" element={<OrderShow />} />
-          <Route path="/admin/order-detail/:id" element={<OrderShow />} />
+          <Route path="/admin/order-detail/:id" element={<OrderDetail />} />
         </Routes>
       </Layout>
     </Router>

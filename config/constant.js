@@ -23,3 +23,10 @@ export const TARGETS = {
     THIET_KE_DO_HOA: 'Thiết kế đồ họa',
     DOANH_NHAN: 'Doanh nhân'
 };
+
+export const STATUS_ORDERS = {
+    PENDING: 'PENDING',
+    SHIPPING: 'SHIPPING',
+    COMPLETED: 'COMPLETED',
+    CANCELLED: 'CANCELLED'
+}

@@ -4,17 +4,17 @@ import Pagination from "../../../components/Pagination";
 import axios from "../../../../config/axiosInstance";
 
 export default function OrderShow() {
-  const [products, setProducts] = useState([]);
+  const [orders, setOrders] = useState([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchProducts(page);
+    fetchOrders(page);
   }, [page]);
 
-  const fetchProducts = async (page) => {
+  const fetchOrders = async (page) => {
     try {
       setLoading(true);
       setError(null);
@@ -22,16 +22,31 @@ export default function OrderShow() {
       const res = await axios.get(`/orders?page=${page}`);
       const data = res.data;
 
-      const fetchedProducts = data.products || data.data || [];
+      const fetchedOrders = data.orders || data.data || [];
       const pages = data.totalPages || data.total_pages || 1;
 
-      setProducts(fetchedProducts);
+      setOrders(fetchedOrders);
       setTotalPages(pages);
     } catch (err) {
       setError(err.response?.data?.message || err.message);
-      setProducts([]);
+      setOrders([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleStatusChange = async (orderId, newStatus) => {
+    try {
+      setOrders((prev) =>
+        prev.map((order) =>
+          order.id === orderId ? { ...order, status: newStatus } : order
+        )
+      );
+
+      await axios.put(`/orders/${orderId}/status`, { status: newStatus });
+      console.log("Status updated:", newStatus);
+    } catch (error) {
+      console.error("Error updating status:", error);
     }
   };
 
@@ -55,22 +70,23 @@ export default function OrderShow() {
         <h5 className="text-lg font-semibold">Table orders:</h5>
       </div>
 
-      <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
-        <table className="w-full text-sm text-left text-gray-500">
-          <thead className="text-xs text-gray-700 uppercase bg-gray-200">
+      <div className="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
+        <table className="w-full text-sm text-left text-gray-700">
+          <thead className="bg-gray-100 text-gray-900 uppercase text-xs">
             <tr>
               <th className="px-6 py-3">ID</th>
               <th className="px-6 py-3">User</th>
               <th className="px-6 py-3">Total Price</th>
               <th className="px-6 py-3">Status</th>
               <th className="px-6 py-3">Payment Method</th>
+              <th className="px-6 py-3">Payment Status</th>
               <th className="px-6 py-3">Action</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="5" className="text-center py-4">
+                <td colSpan="7" className="text-center py-4">
                   Loading...
                 </td>
               </tr>
@@ -80,24 +96,44 @@ export default function OrderShow() {
                   Error: {error}
                 </td>
               </tr>
-            ) : products.length > 0 ? (
-              products.map((product) => (
+            ) : orders.length > 0 ? (
+              orders.map((order) => (
                 <tr
-                  key={product.id}
+                  key={order.id}
                   className="odd:bg-white even:bg-gray-50 border-b"
                 >
                   <th className="px-6 py-4 font-medium text-gray-900">
-                    {product.id}
+                    {order.id}
                   </th>
+                  <td className="px-6 py-4">{order.user.fullName || "N/A"}</td>
                   <td className="px-6 py-4">
-                    {product.fullName || product.name}
+                    {new Intl.NumberFormat("vi-VN", {
+                      style: "currency",
+                      currency: "VND",
+                    }).format(order.totalPrice)}
                   </td>
-                  <td className="px-6 py-4">{product.price}</td>
-                  <td className="px-6 py-4">{product.factory || "N/A"}</td>
+                  <td className="px-6 py-4">
+                    <select
+                      name="status"
+                      value={order.status}
+                      onChange={(e) =>
+                        handleStatusChange(order.id, e.target.value)
+                      }
+                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg outline-none focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                    >
+                      <option value="Pending">PENDING</option>
+                      <option value="Shipped">SHIPPING</option>
+                      <option value="Delivered">COMPLETED</option>
+                      <option value="Cancelled">CANCELLED</option>
+                    </select>
+                  </td>
+
+                  <td className="px-6 py-4">{order.paymentMethod}</td>
+                  <td className="px-6 py-4">{order.paymentStatus}</td>
                   <td className="px-6 py-4">
                     <div className="flex gap-2">
                       <Link
-                        to={`/admin/product-detail/${product.id}`}
+                        to={`/admin/order-detail/${order.id}`}
                         className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
                       >
                         View
@@ -108,8 +144,8 @@ export default function OrderShow() {
               ))
             ) : (
               <tr>
-                <td colSpan="5" className="text-center py-4">
-                  No products found.
+                <td colSpan="7" className="text-center py-4">
+                  No orders found.
                 </td>
               </tr>
             )}

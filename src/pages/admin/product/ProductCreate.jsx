@@ -80,9 +80,11 @@ export default function ProductCreate() {
               to="/admin/products"
               className="text-blue-600 hover:underline"
             >
-              Product
+              Products
             </Link>
+            <span className="ms-2">/</span>
           </li>
+          <li className="text-gray-700">Create A Product</li>
         </ol>
       </nav>
 

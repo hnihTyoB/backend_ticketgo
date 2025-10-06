@@ -105,14 +105,16 @@ export default function UserDetail() {
           </li>
           <li>
             <Link to="/admin/users" className="text-blue-600 hover:underline">
-              User
+              Users
             </Link>
+            <span className="ms-2">/</span>
           </li>
+          <li className="text-gray-700">User Details</li>
         </ol>
       </nav>
 
       <h5 className="text-lg font-semibold mb-6 max-w-lg mx-auto">
-        Detail User
+        User Details
       </h5>
 
       {/* Error */}
