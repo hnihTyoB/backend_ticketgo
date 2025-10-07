@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Pagination from "../../../components/Pagination";
 import axios from "../../../../config/axiosInstance";
+import { STATUS_ORDERS } from "../../../../config/constant";
 
 export default function OrderShow() {
   const [orders, setOrders] = useState([]);
@@ -9,6 +10,7 @@ export default function OrderShow() {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [statuses] = useState(Object.values(STATUS_ORDERS));
 
   useEffect(() => {
     fetchOrders(page);
@@ -121,10 +123,12 @@ export default function OrderShow() {
                       }
                       className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg outline-none focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                     >
-                      <option value="Pending">PENDING</option>
-                      <option value="Shipped">SHIPPING</option>
-                      <option value="Delivered">COMPLETED</option>
-                      <option value="Cancelled">CANCELLED</option>
+                      {Array.isArray(statuses) &&
+                        statuses.map((status, index) => (
+                          <option key={index} value={status}>
+                            {status}
+                          </option>
+                        ))}
                     </select>
                   </td>
 
