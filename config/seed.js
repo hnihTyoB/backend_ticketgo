@@ -7,7 +7,7 @@ dotenv.config();
 
 const prisma = new PrismaClient();
 
-async function main() {
+async function initDatabase() {
     const countRole = await prisma.role.count();
     const countUser = await prisma.user.count();
     const countProduct = await prisma.product.count();
@@ -164,7 +164,7 @@ async function main() {
     }
 }
 
-main()
+initDatabase()
     .then(() => {
         console.log("🌱 Seed hoàn tất");
     })
@@ -175,3 +175,5 @@ main()
     .finally(async () => {
         await prisma.$disconnect();
     });
+
+export default initDatabase;

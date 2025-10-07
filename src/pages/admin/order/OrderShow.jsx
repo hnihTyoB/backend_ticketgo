@@ -94,7 +94,7 @@ export default function OrderShow() {
               </tr>
             ) : error ? (
               <tr>
-                <td colSpan="5" className="text-center py-4 text-red-500">
+                <td colSpan="7" className="text-center py-4 text-red-500">
                   Error: {error}
                 </td>
               </tr>

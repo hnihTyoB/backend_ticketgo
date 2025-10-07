@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { prisma } from "../config/client.js";
+import { ACCOUNT_TYPE } from "../config/constant.js";
 import process from "process";
 
 const saltRounds = 10;
@@ -50,4 +51,39 @@ export const isEmailExist = async (email) => {
         where: { username: email },
     });
     return !!user;
+}
+
+export const registerUser = async (email, password) => {
+    const newPassword = await hashPassword(password);
+    const userRole = await prisma.role.findUnique({
+        where: { name: 'User' }
+    });
+    if (!userRole) {
+        throw new Error("Default user role not found");
+    }
+    const newUser = await prisma.user.create({
+        data: {
+            username: email,
+            password: newPassword,
+            accountType: ACCOUNT_TYPE.SYSTEM,
+            roleId: userRole.id,
+        }
+    });
+    return newUser;
+}
+
+export const findUserWithRoleById = async (id) => {
+    const user = await prisma.user.findUnique({
+        where: { id: parseInt(id) },
+        include: { role: true },
+        omit: { password: true }
+    });
+    return user;
+}
+
+export const countUserSumCart = async (id) => {
+    const user = await prisma.cart.findUnique({
+        where: { userId: parseInt(id) }
+    });
+    return user?.sum || 0;
 }
