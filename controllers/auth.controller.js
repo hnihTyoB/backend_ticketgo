@@ -34,20 +34,16 @@ export const userRegister = async (req, res) => {
     }
 };
 
-export const successRedirect = (req, res) => {
-    const user = req.user;
-    if (user?.role?.name === 'Admin') {
-        res.redirect('/admin');
+export const successRedirect = (user, navigate) => {
+    if (user?.role?.name === "Admin") {
+        navigate("/admin");
     } else {
-        res.redirect('/user');
+        navigate("/user");
     }
-}
+};
 
-export const userLogout = (req, res, next) => {
-    req.logout(function (err) {
-        if (err) { return next(err); }
-        res.redirect('/');
-    });
+export const userLogout = (navigate) => {
+    navigate("/");
 }
 
 export default router;
