@@ -1,0 +1,133 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "mysql"
+    url      = env("DATABASE_URL")
+}
+
+model Session {
+    id        String   @id
+    sid       String   @unique
+    data      String   @db.MediumText
+    expiresAt DateTime
+}
+
+model User {
+    id          Int       @id @default(autoincrement())
+    fullName    String    @db.VarChar(255)
+    phone       String?   @unique @db.VarChar(20)
+    email       String?   @unique @db.VarChar(255)
+    password    String    @db.VarChar(255)
+    birthDate   DateTime?
+    gender      String?   @db.VarChar(10) // "Nam", "Nữ", "Khác"
+    avatar      String?   @db.VarChar(255)
+    accountType String    @default("SYSTEM") @db.VarChar(50)
+
+    role        Role          @relation(fields: [roleId], references: [id])
+    roleId      Int
+    TicketCart  TicketCart?
+    TicketOrder TicketOrder[]
+
+    @@map("users")
+}
+
+model Role {
+    id          Int    @id @default(autoincrement())
+    name        String @unique @db.VarChar(100)
+    description String @db.VarChar(255)
+
+    users User[]
+
+    @@map("roles")
+}
+
+model Event {
+    id          Int      @id @default(autoincrement())
+    title       String   @db.VarChar(255)
+    description String   @db.MediumText
+    category    String   @db.VarChar(255)
+    location    String   @db.VarChar(255)
+    startDate   DateTime
+    duration    String   @db.VarChar(100)
+    organizer   String?  @db.VarChar(255)
+    bannerUrl   String?  @db.VarChar(500)
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    ticketTypes TicketType[]
+
+    @@map("events")
+}
+
+model TicketType {
+    id       Int    @id @default(autoincrement())
+    type     String @db.VarChar(100) // Standard, VIP, v.v.
+    price    Int
+    quantity Int
+    sold     Int?   @default(0)
+
+    event   Event @relation(fields: [eventId], references: [id])
+    eventId Int
+
+    ticketCartDetails  TicketCartDetail[]
+    ticketOrderDetails TicketOrderDetail[]
+
+    @@map("ticket_types")
+}
+
+model TicketCart {
+    id  Int @id @default(autoincrement())
+    sum Int
+
+    user              User               @relation(fields: [userId], references: [id])
+    userId            Int                @unique
+    ticketCartDetails TicketCartDetail[]
+
+    @@map("ticket_carts")
+}
+
+model TicketCartDetail {
+    id       Int @id @default(autoincrement())
+    quantity Int
+    price    Int
+
+    cart         TicketCart @relation(fields: [cartId], references: [id])
+    cartId       Int
+    ticketType   TicketType @relation(fields: [ticketTypeId], references: [id])
+    ticketTypeId Int
+
+    @@map("ticket_cart_detail")
+}
+
+model TicketOrder {
+    id            Int      @id @default(autoincrement())
+    totalPrice    Int
+    receiverPhone String   @db.VarChar(255)
+    receiverEmail String?  @db.VarChar(255)
+    status        String   @default("PENDING") // PENDING, CONFIRMED, COMPLETED, CANCELLED
+    paymentMethod String   @default("VNPAY") // BANKING, CREDIT_CARD, etc.
+    paymentStatus String // PAYMENT_UNPAID, PAYMENT_SUCCESS, PAYMENT_FAILED
+    paymentRef    String?
+    createdAt     DateTime @default(now())
+
+    user               User                @relation(fields: [userId], references: [id])
+    userId             Int
+    ticketOrderDetails TicketOrderDetail[]
+
+    @@map("ticket_orders")
+}
+
+model TicketOrderDetail {
+    id       Int @id @default(autoincrement())
+    quantity Int
+    price    Int
+
+    order        TicketOrder @relation(fields: [orderId], references: [id])
+    orderId      Int
+    ticketType   TicketType  @relation(fields: [ticketTypeId], references: [id])
+    ticketTypeId Int
+
+    @@map("ticket_order_detail")
+}

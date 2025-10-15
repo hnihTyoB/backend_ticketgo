@@ -3,8 +3,9 @@ import process from "process";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
-import { apiRoutes } from "./routes/api.js";
-import initDatabase from "./config/seed.js";
+import 'dotenv/config';
+import { apiRoutes } from "./src/routes/api.js";
+import { initDatabase } from "./src/config/seed.js";
 
 const app = express();
 app.use(cors());
@@ -12,7 +13,7 @@ app.use(cors());
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-app.use("/images", express.static(path.join(__dirname, "public/images")));
+app.use("/images", express.static(path.join(__dirname, "../ticket-go-ptit/public/images")));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
