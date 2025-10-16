@@ -5,6 +5,9 @@ export const findAllEvents = async (page, limit) => {
     const events = await prisma.event.findMany({
         skip: skip,
         take: limit,
+        include: {
+            ticketTypes: true
+        },
     });
     return events;
 };
@@ -17,26 +20,23 @@ export const countTotalEventPages = async (limit) => {
 
 export const findEventById = async (id) => {
     return await prisma.event.findUnique({
-        where: { id: Number(id) }
-    });
-};
-
-export const createEvent = async (title, description, category, location, startDate, duration, organizer, bannerUrl) => {
-    return await prisma.event.create({
-        data: {
-            title, description, category, location, startDate, duration, organizer, bannerUrl
+        where: { id: Number(id) },
+        include: {
+            ticketTypes: true
         },
     });
 };
 
-export const updateEvent = async (id, title, description, category, location, startDate, duration, organizer, bannerUrl) => {
-    const dataToUpdate = {
-        title, description, category, location, startDate, duration, organizer, bannerUrl
-    };
+export const createEvent = async (data) => {
+    return await prisma.event.create({
+        data: data
+    });
+};
 
+export const updateEvent = async (id, data) => {
     return await prisma.event.update({
         where: { id: Number(id) },
-        data: dataToUpdate,
+        data: data,
     });
 };
 

@@ -6,7 +6,7 @@ import { getAllOrders, getOrderById, putUpdateStatus } from "../controllers/orde
 import { successRedirect, userLogin, userLogout, userRegister } from "../controllers/auth.controller.js";
 import { addTicketToCart, checkOut, getCart, getOrderHistory, getThanks, handleCartToCheckout, placeOrder, removeTicketFromCart, updateQuantity } from "../controllers/cart.controller.js";
 import { getDashboard } from "../controllers/dashboard.controller.js";
-import { isAdmin } from "../middlewares/auth.js";
+import { isAdmin, isLogin } from "../middlewares/auth.js";
 
 export const apiRoutes = (app) => {
     const authRouter = express.Router();
@@ -19,9 +19,9 @@ export const apiRoutes = (app) => {
     userRouter.get("/", getAllUsers);
     userRouter.get("/roles", getAllRoles);
     userRouter.get("/:id", getUserById);
-    userRouter.post("/", isAdmin, fileUploadMiddleware("avatar", "user"), postCreateUser);
-    userRouter.put("/:id", isAdmin, fileUploadMiddleware("avatar", "user"), putUpdateUser);
-    userRouter.delete("/:id", isAdmin, deleteUser);
+    userRouter.post("/", fileUploadMiddleware("avatar", "user"), postCreateUser);
+    userRouter.put("/:id", fileUploadMiddleware("avatar", "user"), putUpdateUser);
+    userRouter.delete("/:id", deleteUser);
 
     const eventRouter = express.Router();
     eventRouter.get("/", getAllEvents);
@@ -31,28 +31,28 @@ export const apiRoutes = (app) => {
     eventRouter.delete("/:id", isAdmin, deleteEvent);
 
     const cartRouter = express.Router();
-    cartRouter.get("/cart", getCart);
-    cartRouter.post("/cart", addTicketToCart);
-    cartRouter.put("/cart", updateQuantity);
-    cartRouter.delete("/cart", removeTicketFromCart);
-    cartRouter.post("/cart/prepare-checkout", handleCartToCheckout);
-    cartRouter.get("/cart/checkout", checkOut);
-    cartRouter.post("/cart/place-order", placeOrder);
+    cartRouter.get("/", getCart);
+    cartRouter.post("/", addTicketToCart);
+    cartRouter.put("/", updateQuantity);
+    cartRouter.delete("/", removeTicketFromCart);
+    cartRouter.post("/prepare-checkout", handleCartToCheckout);
+    cartRouter.get("/checkout", checkOut);
+    cartRouter.post("/place-order", placeOrder);
     cartRouter.get("/thanks", getThanks);
     cartRouter.get("/order-history", getOrderHistory);
 
     const orderRouter = express.Router();
     orderRouter.get("/", getAllOrders);
     orderRouter.get("/:id", getOrderById);
-    orderRouter.put("/:id", isAdmin, putUpdateStatus);
+    orderRouter.put("/:id", putUpdateStatus);
 
     const dashboardRouter = express.Router();
-    dashboardRouter.get("/count", isAdmin, getDashboard);
+    dashboardRouter.get("/count", getDashboard);
 
     app.use("/api/auth", authRouter);
     app.use("/api/users", isAdmin, userRouter);
     app.use("/api/events", eventRouter);
-    app.use("/api/carts", cartRouter);
+    app.use("/api/carts", isLogin, cartRouter);
     app.use("/api/orders", isAdmin, orderRouter);
     app.use("/api/dashboard", isAdmin, dashboardRouter);
 };

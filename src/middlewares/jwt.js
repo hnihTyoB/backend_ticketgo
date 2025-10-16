@@ -5,10 +5,14 @@ export const checkValidJWT = (req, res, next) => {
     const whitelist = [
         "/auth/login",
         "/auth/register",
-        "/products",
     ];
 
-    if (whitelist.some(path => req.path.startsWith(path))) {
+    const publicGetPaths = ["/events"];
+
+    if (
+        whitelist.includes(req.path) ||
+        (req.method === "GET" && publicGetPaths.some(path => req.path.startsWith(path)))
+    ) {
         return next();
     }
 
@@ -27,12 +31,15 @@ export const checkValidJWT = (req, res, next) => {
 
         req.user = {
             id: decoded.id,
-            username: decoded.username,
-            fullName: decoded.fullName,
-            accountType: decoded.accountType,
+            fullName: "",
+            phone: "",
+            password: "",
+            birthDate: "",
+            gender: "",
             avatar: decoded.avatar,
-            roleId: decoded.roleId,
+            accountType: decoded.accountType,
             role: decoded.role,
+            roleId: decoded.roleId,
         };
 
         next();

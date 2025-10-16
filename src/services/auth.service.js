@@ -81,16 +81,8 @@ export const registerUser = async ({ email, password, roleName = "USER" }) => {
 export const findUserWithRoleById = async (id) => {
     const user = await prisma.user.findUnique({
         where: { id: Number(id) },
-        select: {
-            id: true,
-            fullName: true,
-            email: true,
-            phone: true,
-            avatar: true,
-            accountType: true,
-            roleId: true,
-            role: true,
-        }
+        include: { role: true },
+        omit: { password: true },
     });
     return user;
 };
@@ -98,15 +90,14 @@ export const findUserWithRoleById = async (id) => {
 export const countUserSumCart = async (userId) => {
     const cart = await prisma.ticketCart.findUnique({
         where: { userId: userId },
-        include: { ticketCartDetails: true },
     });
 
     if (!cart) return 0;
 
-    const totalQuantity = cart.ticketCartDetails.reduce(
-        (sum, item) => sum + item.quantity,
-        0
-    );
+    const sum = await prisma.ticketCartDetail.aggregate({
+        where: { ticketCartId: cart.id },
+        _sum: { quantity: true },
+    });
 
-    return totalQuantity;
+    return sum._sum.quantity || 0;
 };

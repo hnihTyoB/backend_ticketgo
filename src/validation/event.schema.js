@@ -31,6 +31,5 @@ export const eventSchema = z.object({
 
     bannerUrl: z.string()
         .trim()
-        .url({ message: "URL banner không hợp lệ" })
-        .optional(),
+        .min(1, { message: "Banner sự kiện là bắt buộc" }),
 });

@@ -15,13 +15,12 @@ export const CATEGORIES = {
 
 export const STATUS_ORDERS = {
     PENDING: 'PENDING',
-    SHIPPING: 'SHIPPING',
     COMPLETED: 'COMPLETED',
     CANCELLED: 'CANCELLED'
 }
 
 export const PAYMENT_METHOD = {
-    COD: 'COD',
+    VNPAY: 'VNPAY',
     BANKING: 'BANKING',
     CREDIT_CARD: 'CREDIT_CARD'
 }

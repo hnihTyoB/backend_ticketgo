@@ -10,14 +10,25 @@ import {
 import { eventSchema } from "../validation/event.schema.js";
 
 export const getAllEvents = async (req, res) => {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || TOTAL_ITEM_PER_PAGE;
     try {
-        const events = await findAllEvents(page, limit);
-        const totalPages = await countTotalEventPages(limit);
-        res.json({ events, totalPages });
+        const page = Number(req.query.page) || 1;
+        const limit = Number(req.query.limit) || TOTAL_ITEM_PER_PAGE;
+
+        const [events, totalPages] = await Promise.all([
+            findAllEvents(page, limit),
+            countTotalEventPages(limit),
+        ]);
+
+        res.status(200).json({
+            events,
+            totalPages,
+        });
     } catch (err) {
-        res.status(500).json({ message: "Lỗi server", error: err.message });
+        console.error("Lỗi khi lấy danh sách sự kiện:", err);
+        res.status(500).json({
+            message: "Lỗi server",
+            error: err.message
+        });
     }
 };
 
@@ -33,26 +44,30 @@ export const getEventById = async (req, res) => {
 
 export const postCreateEvent = async (req, res) => {
     try {
-        const validate = await eventSchema.safeParseAsync(req.body);
+        const bannerUrl = req.file ? `/images/event/${req.file.filename}` : "";
 
+        const eventData = {
+            ...req.body,
+            bannerUrl: bannerUrl
+        };
+
+        const validate = await eventSchema.safeParseAsync(eventData);
         if (!validate.success) {
             return res.status(400).json({
                 message: "Dữ liệu không hợp lệ",
                 errors: validate.error.issues.map(err => `${err.message}`)
             });
         }
-
-        const { title, description, category, location, startDate, duration, organizer, bannerUrl } = validate.data;
-
+        const { title, description, category, location, startDate, duration, organizer, bannerUrl: validatedBannerUrl } = validate.data;
         const newEvent = await createEvent({
             title,
             description,
             category,
             location,
-            startDate: new Date(startDate),
+            startDate,
             duration,
             organizer,
-            bannerUrl
+            bannerUrl: validatedBannerUrl
         });
 
         res.status(201).json({ message: "Tạo sự kiện thành công", event: newEvent });
@@ -63,7 +78,18 @@ export const postCreateEvent = async (req, res) => {
 
 export const putUpdateEvent = async (req, res) => {
     try {
-        const validate = await eventSchema.safeParseAsync(req.body);
+        let bannerUrl = req.body.bannerUrl || "";
+
+        if (req.file) {
+            bannerUrl = `/images/event/${req.file.filename}`;
+        }
+
+        const eventData = {
+            ...req.body,
+            bannerUrl: bannerUrl
+        };
+
+        const validate = await eventSchema.safeParseAsync(eventData);
 
         if (!validate.success) {
             return res.status(400).json({
@@ -72,17 +98,17 @@ export const putUpdateEvent = async (req, res) => {
             });
         }
 
-        const { title, description, category, location, startDate, duration, organizer, bannerUrl } = validate.data;
+        const { title, description, category, location, startDate, duration, organizer, bannerUrl: validatedBannerUrl } = validate.data;
 
         const updatedEvent = await updateEvent(req.params.id, {
             title,
             description,
             category,
             location,
-            startDate: startDate ? new Date(startDate) : undefined,
+            startDate,
             duration,
             organizer,
-            bannerUrl
+            bannerUrl: validatedBannerUrl,
         });
 
         res.json({ message: "Cập nhật sự kiện thành công", event: updatedEvent });

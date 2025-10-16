@@ -53,7 +53,7 @@ async function initDatabase() {
                 description: "Sự kiện EDM hoành tráng với dàn DJ quốc tế.",
                 category: "EDM",
                 location: "SVĐ Phú Thọ, Quận 11, TP.HCM",
-                startDate: new Date("2025-10-19T00:00:00"),
+                startDate: new Date("2025-10-19"),
                 duration: "19:30 - 22:30",
                 organizer: "YG Entertainment",
                 bannerUrl:
@@ -75,7 +75,7 @@ async function initDatabase() {
 <p>Một đêm diễn đặc biệt dành riêng cho những ai yêu mến âm nhạc Chillies. Sân khấu lần này không chỉ để lắng nghe những ca khúc mới, mà còn là khoảnh khắc kết nối gần gũi giữa Chillies và khán giả. Hãy chuẩn bị tinh thần cho một đêm nhạc bất ngờ và đáng nhớ cùng Chillies!</p>`,
                 category: "Nhạc sống",
                 location: "Nhà Văn Hóa Thanh Niên, TP.HCM",
-                startDate: new Date("2025-11-01T00:00:00"),
+                startDate: new Date("2025-11-01"),
                 duration: "19:30 - 22:30",
                 organizer: "Food Global",
                 bannerUrl:
@@ -91,7 +91,7 @@ async function initDatabase() {
                 description: "Sự kiện marathon với nhiều cự ly khác nhau.",
                 category: "Thể thao",
                 location: "Phố đi bộ Nguyễn Huệ, TP.HCM",
-                startDate: new Date("2025-12-10T00:00:00"),
+                startDate: new Date("2025-12-10"),
                 duration: "19:30 - 22:30",
                 organizer: "City Marathon Org",
                 bannerUrl:
@@ -109,7 +109,7 @@ async function initDatabase() {
                 description: "Trình diễn các công nghệ mới nhất trong AI, IoT và VR.",
                 category: "Nhạc sống",
                 location: "Trung tâm Hội nghị SECC, Q.7, TP.HCM",
-                startDate: new Date("2025-11-20T00:00:00"),
+                startDate: new Date("2025-11-20"),
                 duration: "19:30 - 22:30",
                 organizer: "TechWorld Vietnam",
                 bannerUrl:
@@ -127,7 +127,7 @@ async function initDatabase() {
                     "Lần đầu tiên tại Hà Nội, Dàn nhạc Teatro Massimo, biểu tượng nghệ thuật...",
                 category: "Nhạc cổ điển",
                 location: "CGV Landmark 81, TP.HCM",
-                startDate: new Date("2025-12-05T00:00:00"),
+                startDate: new Date("2025-12-05"),
                 duration: "19:30 - 22:30",
                 organizer: "Vietnam Film Association",
                 bannerUrl:
@@ -159,7 +159,7 @@ async function initDatabase() {
 <p>Điều 13. Trong mọi trường hợp, quyết định của BTC là quyết định cuối cùng.</p>`,
                 category: "Nhạc sống",
                 location: "SVĐ Quân Khu 7, TP.HCM",
-                startDate: new Date("2025-10-30T19:00:00"),
+                startDate: new Date("2025-10-30"),
                 duration: "19:30 - 22:30",
                 organizer: "RapViet Entertainment",
                 bannerUrl:
@@ -176,7 +176,7 @@ async function initDatabase() {
                 description: "Học hỏi kinh nghiệm từ các startup thành công.",
                 category: "Giải trí",
                 location: "ĐH Kinh Tế TP.HCM",
-                startDate: new Date("2025-11-10T08:00:00"),
+                startDate: new Date("2025-11-10"),
                 duration: "19:30 - 22:30",
                 organizer: "Startup Vietnam Foundation",
                 bannerUrl:
@@ -193,7 +193,7 @@ async function initDatabase() {
                 description: "Các đội bóng sinh viên tranh tài hấp dẫn.",
                 category: "Nhạc sống",
                 location: "SVĐ Thống Nhất, TP.HCM",
-                startDate: new Date("2025-11-25T15:00:00"),
+                startDate: new Date("2025-11-25"),
                 duration: "19:30 - 22:30",
                 organizer: "Liên đoàn bóng đá SVVN",
                 bannerUrl:
@@ -210,7 +210,7 @@ async function initDatabase() {
                 description: "Bộ sưu tập nghệ thuật độc đáo của các họa sĩ trẻ.",
                 category: "Nhạc sống",
                 location: "Bảo tàng Mỹ Thuật TP.HCM",
-                startDate: new Date("2025-10-20T09:00:00"),
+                startDate: new Date("2025-10-20"),
                 duration: "19:30 - 22:30",
                 organizer: "ArtSpace Vietnam",
                 bannerUrl:
@@ -228,7 +228,7 @@ async function initDatabase() {
                     "Lululola Show - Hơn cả âm nhạc, không gian lãng mạn đậm chất thơ Đà Lạt bao trọn hình ảnh thung lũng Đà Lạt, được ngắm nhìn khoảng khắc hoàng hôn thơ mộng đến khi Đà Lạt về đêm siêu lãng mạn, được giao lưu với thần tượng một cách chân thật và gần gũi nhất trong không gian ấm áp và không khí se lạnh của Đà Lạt. Tất cả sẽ mang đến một đêm nhạc ấn tượng mà bạn không thể quên khi đến với Đà Lạt.",
                 category: "Nhạc sống",
                 location: "Công viên 23/9, TP.HCM",
-                startDate: new Date("2025-12-18T10:00:00"),
+                startDate: new Date("2025-12-18"),
                 duration: "19:30 - 22:30",
                 organizer: "Street Culture Org",
                 bannerUrl:
