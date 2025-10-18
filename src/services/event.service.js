@@ -5,9 +5,6 @@ export const findAllEvents = async (page, limit) => {
     const events = await prisma.event.findMany({
         skip: skip,
         take: limit,
-        include: {
-            ticketTypes: true
-        },
     });
     return events;
 };
@@ -23,7 +20,7 @@ export const findEventById = async (id) => {
         where: { id: Number(id) },
         include: {
             ticketTypes: true
-        },
+        }
     });
 };
 

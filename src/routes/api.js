@@ -6,6 +6,7 @@ import { getAllOrders, getOrderById, putUpdateStatus } from "../controllers/orde
 import { successRedirect, userLogin, userLogout, userRegister } from "../controllers/auth.controller.js";
 import { addTicketToCart, checkOut, getCart, getOrderHistory, getThanks, handleCartToCheckout, placeOrder, removeTicketFromCart, updateQuantity } from "../controllers/cart.controller.js";
 import { getDashboard } from "../controllers/dashboard.controller.js";
+import { getTicketTypesByEvent, postCreateTicketTypeById, putUpdateTicketTypeById, deleteTicketTypeById, putUpdateTicketSoldById } from "../controllers/ticket.controller.js";
 import { isAdmin, isLogin } from "../middlewares/auth.js";
 
 export const apiRoutes = (app) => {
@@ -30,6 +31,13 @@ export const apiRoutes = (app) => {
     eventRouter.put("/:id", isAdmin, fileUploadMiddleware("image", "event"), putUpdateEvent);
     eventRouter.delete("/:id", isAdmin, deleteEvent);
 
+    const ticketRouter = express.Router();
+    ticketRouter.get("/event/:eventId", getTicketTypesByEvent);
+    ticketRouter.post("/:id", isAdmin, postCreateTicketTypeById);
+    ticketRouter.put("/:id", isAdmin, putUpdateTicketTypeById);
+    ticketRouter.put("/:id/sold", isAdmin, putUpdateTicketSoldById);
+    ticketRouter.delete("/:id", isAdmin, deleteTicketTypeById);
+
     const cartRouter = express.Router();
     cartRouter.get("/", getCart);
     cartRouter.post("/", addTicketToCart);
@@ -52,6 +60,7 @@ export const apiRoutes = (app) => {
     app.use("/api/auth", authRouter);
     app.use("/api/users", isAdmin, userRouter);
     app.use("/api/events", eventRouter);
+    app.use("/api/tickets", ticketRouter);
     app.use("/api/carts", isLogin, cartRouter);
     app.use("/api/orders", isAdmin, orderRouter);
     app.use("/api/dashboard", isAdmin, dashboardRouter);
