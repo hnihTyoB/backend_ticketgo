@@ -13,6 +13,12 @@ export const CATEGORIES = {
     KHAC: 'Khác'
 };
 
+export const GENDERS = {
+    MALE: 'Nam',
+    FEMALE: 'Nữ',
+    OTHER: 'Khác'
+}
+
 export const STATUS_ORDERS = {
     PENDING: 'PENDING',
     COMPLETED: 'COMPLETED',
@@ -26,7 +32,7 @@ export const PAYMENT_METHOD = {
 }
 
 export const PAYMENT_STATUS = {
-    PAYMENT_UNPAID: 'PAYMENT_UNPAID',
-    PAYMENT_SUCCESS: 'PAYMENT_SUCCESS',
-    PAYMENT_FAILED: 'PAYMENT_FAILED'
+    PAYMENT_UNPAID: 'UNPAID',
+    PAYMENT_SUCCESS: 'SUCCESS',
+    PAYMENT_FAILED: 'FAILED'
 }

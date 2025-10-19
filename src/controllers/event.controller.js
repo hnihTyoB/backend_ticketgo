@@ -55,7 +55,10 @@ export const postCreateEvent = async (req, res) => {
         if (!validate.success) {
             return res.status(400).json({
                 message: "Dữ liệu không hợp lệ",
-                errors: validate.error.issues.map(err => `${err.message}`)
+                errors: validate.error.issues.map(err => ({
+                    path: err.path[0],
+                    message: err.message
+                }))
             });
         }
         const { title, description, category, location, startDate, duration, organizer, bannerUrl: validatedBannerUrl } = validate.data;
@@ -94,7 +97,10 @@ export const putUpdateEvent = async (req, res) => {
         if (!validate.success) {
             return res.status(400).json({
                 message: "Dữ liệu không hợp lệ",
-                errors: validate.error.issues.map(err => `${err.message}`)
+                errors: validate.error.issues.map(err => ({
+                    path: err.path[0],
+                    message: err.message
+                }))
             });
         }
 

@@ -33,8 +33,8 @@ async function initDatabase() {
         const userRole = await prisma.role.findUnique({ where: { name: "USER" } });
 
         const users = [
-            { fullName: "Nguyễn Chí Thịnh", phone: "0912345678", email: "thinh@example.com", password: hashedPassword, roleId: adminRole.id },
-            { fullName: "Nguyễn Văn A", phone: "0987654321", email: "vana@example.com", password: hashedPassword, roleId: userRole.id },
+            { fullName: "Nguyễn Chí Thịnh", phone: "0912345678", email: "thinh@example.com", password: hashedPassword, birthDate: new Date("1990-01-01"), gender: "Nam", roleId: adminRole.id },
+            { fullName: "Nguyễn Văn A", phone: "0987654321", email: "vana@example.com", password: hashedPassword, birthDate: new Date("1990-01-01"), gender: "Nam", roleId: userRole.id },
         ];
         for (const user of users) {
             const existingUser = await prisma.user.findUnique({
@@ -60,8 +60,8 @@ async function initDatabase() {
                     "https://salt.tkbcdn.com/ts/ds/f3/80/f0/32ee189d7a435daf92b6a138d925381c.png",
                 ticketTypes: {
                     create: [
-                        { type: "Standard", price: 300000, quantity: 500 },
-                        { type: "VIP", price: 800000, quantity: 100 },
+                        { type: "Standard", price: 300000, quantity: 500, description: "Vé thường" },
+                        { type: "VIP", price: 800000, quantity: 100, description: "Vé VIP" },
                     ],
                 },
             },
@@ -82,7 +82,7 @@ async function initDatabase() {
                     "https://salt.tkbcdn.com/ts/ds/63/8e/c1/6be36d3ecc5fe3e0c4a31b27a00f80fc.jpg",
                 ticketTypes: {
                     create: [
-                        { type: "Chilly", price: 100000, quantity: 0 },
+                        { type: "Chilly", price: 100000, quantity: 0, description: "Vé Chilly" },
                     ],
                 },
             },
@@ -98,9 +98,9 @@ async function initDatabase() {
                     "https://salt.tkbcdn.com/ts/ds/90/37/6e/cfa9510b1f648451290e0cf57b6fd548.jpg",
                 ticketTypes: {
                     create: [
-                        { type: "Em", price: 200000, quantity: 0 },
-                        { type: "Xinh", price: 300000, quantity: 200 },
-                        { type: "SayHi", price: 500000, quantity: 100 },
+                        { type: "Em", price: 200000, quantity: 0, description: "Vé Em" },
+                        { type: "Xinh", price: 300000, quantity: 200, description: "Vé Xinh" },
+                        { type: "SayHi", price: 500000, quantity: 100, description: "Vé SayHi" },
                     ],
                 },
             },
@@ -116,8 +116,8 @@ async function initDatabase() {
                     "https://salt.tkbcdn.com/ts/ds/c6/e1/c2/d3d41b377ea3d9a3cd18177d656516d7.jpg",
                 ticketTypes: {
                     create: [
-                        { type: "General", price: 150000, quantity: 1000 },
-                        { type: "VIP", price: 500000, quantity: 200 },
+                        { type: "General", price: 150000, quantity: 1000, description: "Vé General" },
+                        { type: "VIP", price: 500000, quantity: 200, description: "Vé VIP" },
                     ],
                 },
             },
@@ -134,8 +134,8 @@ async function initDatabase() {
                     "https://salt.tkbcdn.com/ts/ds/88/52/dd/6ad9f988be92ae9bbaf1cbd395b3aa10.jpg",
                 ticketTypes: {
                     create: [
-                        { type: "Standard", price: 120000, quantity: 500 },
-                        { type: "Combo 3 phim", price: 300000, quantity: 200 },
+                        { type: "Standard", price: 120000, quantity: 500, description: "Vé Standard" },
+                        { type: "Combo 3 phim", price: 300000, quantity: 200, description: "Vé Combo 3 phim" },
                     ],
                 },
             },
@@ -166,8 +166,8 @@ async function initDatabase() {
                     "https://salt.tkbcdn.com/ts/ds/c9/42/c9/e51cdafa1dfa1937e1847bd3ef2371af.jpg",
                 ticketTypes: {
                     create: [
-                        { type: "Thường", price: 250000, quantity: 1000 },
-                        { type: "VIP", price: 700000, quantity: 200 },
+                        { type: "Thường", price: 250000, quantity: 1000, description: "Vé Thường" },
+                        { type: "VIP", price: 700000, quantity: 200, description: "Vé VIP" },
                     ],
                 },
             },
@@ -183,8 +183,8 @@ async function initDatabase() {
                     "https://salt.tkbcdn.com/ts/ds/9c/0e/cf/ffa9add63b449ab12f587d1a10ab5bc7.jpg",
                 ticketTypes: {
                     create: [
-                        { type: "Sinh viên", price: 50000, quantity: 300 },
-                        { type: "Doanh nhân", price: 200000, quantity: 100 },
+                        { type: "Sinh viên", price: 50000, quantity: 300, description: "Vé Sinh viên" },
+                        { type: "Doanh nhân", price: 200000, quantity: 100, description: "Vé Doanh nhân" },
                     ],
                 },
             },
@@ -200,8 +200,8 @@ async function initDatabase() {
                     "https://salt.tkbcdn.com/ts/ds/fb/eb/66/1d976574a7ad259eb46ec5c6cfeaf63e.png",
                 ticketTypes: {
                     create: [
-                        { type: "Khán đài thường", price: 50000, quantity: 3000 },
-                        { type: "Khán đài VIP", price: 150000, quantity: 500 },
+                        { type: "Khán đài thường", price: 50000, quantity: 3000, description: "Vé Khán đài thường" },
+                        { type: "Khán đài VIP", price: 150000, quantity: 500, description: "Vé Khán đài VIP" },
                     ],
                 },
             },
@@ -217,8 +217,8 @@ async function initDatabase() {
                     "https://salt.tkbcdn.com/ts/ds/3e/b1/c1/034602970c0ce4c58daee24779476ae5.jpg",
                 ticketTypes: {
                     create: [
-                        { type: "Thường", price: 70000, quantity: 500 },
-                        { type: "VIP", price: 200000, quantity: 100 },
+                        { type: "Thường", price: 70000, quantity: 500, description: "Vé Thường" },
+                        { type: "VIP", price: 200000, quantity: 100, description: "Vé VIP" },
                     ],
                 },
             },
@@ -235,15 +235,18 @@ async function initDatabase() {
                     "https://salt.tkbcdn.com/ts/ds/cb/5a/3b/13e9a9ccf99d586df2a7c6bd59d89369.png",
                 ticketTypes: {
                     create: [
-                        { type: "Vé Ngày", price: 80000, quantity: 1000 },
-                        { type: "Combo 3 ngày", price: 200000, quantity: 300 },
+                        { type: "Vé Ngày", price: 80000, quantity: 1000, description: "Vé Ngày" },
+                        { type: "Combo 3 ngày", price: 200000, quantity: 300, description: "Vé Combo 3 ngày" },
                     ],
                 },
             },
         ];
 
         for (const e of events) {
-            await prisma.event.create({ data: e });
+            const event = await prisma.event.create({ data: e });
+            for (const ticketType of e.ticketTypes.create) {
+                await prisma.ticketType.create({ data: { ...ticketType, eventId: event.id } });
+            }
         }
 
         console.log("✅ Đã thêm events");

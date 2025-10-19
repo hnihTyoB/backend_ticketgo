@@ -1,10 +1,16 @@
 import { z } from "zod";
-import { isEmailExist } from "../services/auth.service.js";
+import { isEmailExist, isPhoneExist } from "../services/auth.service.js";
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const phoneRegex = /^(0|\+84)[1-9][0-9]{8,14}$/;
 
 const emailSchema = z
     .string()
     .trim()
-    .email("Email không đúng định dạng")
+    .refine((email) => emailRegex.test(email), {
+        message: "Email không đúng định dạng",
+        path: ["email"]
+    })
     .refine(async (email) => {
         const existingUser = await isEmailExist(email);
         return !existingUser;
@@ -16,8 +22,17 @@ const emailSchema = z
 const phoneSchema = z
     .string()
     .trim()
-    .min(9, { message: "Số điện thoại phải có ít nhất 9 ký tự" })
-    .max(15, { message: "Số điện thoại không hợp lệ" });
+    .refine((phone) => phoneRegex.test(phone), {
+        message: "Số điện thoại không hợp lệ",
+        path: ["phone"]
+    })
+    .refine(async (phone) => {
+        const existingUser = await isPhoneExist(phone);
+        return !existingUser;
+    }, {
+        message: "Số điện thoại đã tồn tại",
+        path: ["phone"]
+    });
 
 export const loginSchema = z
     .object({
@@ -43,18 +58,15 @@ export const createSchema = z
     .object({
         fullName: z.string().trim().min(1, { message: "Họ và tên không được để trống" }),
         email: emailSchema.optional(),
-        phone: z
-            .string()
-            .trim()
-            .min(9, { message: "Số điện thoại phải có ít nhất 9 ký tự" })
-            .max(15, { message: "Số điện thoại không hợp lệ" })
-            .optional(),
+        phone: phoneSchema.optional(),
         birthDate: z
             .string()
             .trim()
             .refine((date) => !isNaN(Date.parse(date)), { message: "Ngày sinh không hợp lệ" }),
-        gender: z.enum(["Nam", "Nữ", "Khác"], { message: "Giới tính không hợp lệ" }),
-        roleId: z.string().trim().min(1, { message: "Vai trò không được để trống" }),
+        gender: z.string().min(1, { message: "Giới tính không được để trống" }),
+        roleId: z.number().min(1, "Vai trò không hợp lệ")
+            .max(2, "Vai trò không hợp lệ").int("Vai trò không hợp lệ"),
+        accountType: z.enum(["SYSTEM", "GOOGLE", "FACEBOOK"]).optional()
     })
     .refine((data) => data.email || data.phone, {
         message: "Cần có ít nhất email hoặc số điện thoại để tạo tài khoản",
@@ -68,12 +80,18 @@ export const updateSchema = z.object({
         .trim()
         .email("Email không đúng định dạng")
         .optional(),
-    phone: phoneSchema.optional(),
+    phone: z
+        .string()
+        .trim()
+        .refine((phone) => phoneRegex.test(phone), { message: "Số điện thoại không hợp lệ" })
+        .optional(),
     birthDate: z
         .string()
         .trim()
         .refine((date) => !isNaN(Date.parse(date)), { message: "Ngày sinh không hợp lệ" })
         .optional(),
-    gender: z.enum(["Nam", "Nữ", "Khác"]).optional(),
-    roleId: z.string().optional(),
+    gender: z.string().min(1, { message: "Giới tính không được để trống" }).optional(),
+    roleId: z.number().min(1, "Vai trò không hợp lệ")
+        .max(2, "Vai trò không hợp lệ").int("Vai trò không hợp lệ"),
+    accountType: z.enum(["SYSTEM", "GOOGLE", "FACEBOOK"]).optional()
 });

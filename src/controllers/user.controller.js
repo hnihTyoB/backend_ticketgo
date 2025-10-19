@@ -8,6 +8,7 @@ import {
     removeUser,
     findAllRoles,
 } from "../services/user.service.js";
+import fs from "fs";
 import { createSchema, updateSchema } from "../validation/user.schema.js";
 
 export const getAllUsers = async (req, res) => {
@@ -43,11 +44,18 @@ export const getAllRoles = async (req, res) => {
 
 export const postCreateUser = async (req, res) => {
     try {
-        const validate = await createSchema.safeParseAsync(req.body);
+        const userData = {
+            ...req.body,
+            roleId: Number(req.body.roleId)
+        };
+        const validate = await createSchema.safeParseAsync(userData);
         if (!validate.success) {
             return res.status(400).json({
                 message: "Dữ liệu không hợp lệ",
-                errors: validate.error.issues.map(err => err.message)
+                errors: validate.error.issues.map(err => ({
+                    path: err.path[0],
+                    message: err.message
+                }))
             });
         }
 
@@ -62,7 +70,7 @@ export const postCreateUser = async (req, res) => {
             gender,
             avatar,
             accountType: accountType || "SYSTEM",
-            roleId: Number(roleId),
+            roleId: roleId,
         });
 
         res.status(201).json({ message: "Tạo người dùng thành công", user: newUser });
@@ -74,26 +82,44 @@ export const postCreateUser = async (req, res) => {
 
 export const putUpdateUser = async (req, res) => {
     try {
-        const validate = await updateSchema.safeParseAsync(req.body);
+        const userData = {
+            ...req.body,
+            roleId: Number(req.body.roleId)
+        };
+        const validate = await updateSchema.safeParseAsync(userData);
         if (!validate.success) {
             return res.status(400).json({
                 message: "Dữ liệu không hợp lệ",
-                errors: validate.error.issues.map(err => err.message)
+                errors: validate.error.issues.map(err => ({
+                    path: err.path[0],
+                    message: err.message
+                }))
             });
         }
 
         const { fullName, phone, birthDate, gender, roleId, accountType } = validate.data;
-        const avatar = req.file ? req.file.filename : null;
 
-        const updatedUser = await updateUser(req.params.id, {
+        const updateData = {
             fullName,
             phone,
             birthDate: birthDate ? new Date(birthDate) : undefined,
             gender,
-            avatar,
-            accountType,
-            roleId: roleId ? Number(roleId) : undefined
-        });
+            accountType: accountType || "SYSTEM",
+            roleId: roleId
+        };
+
+        if (req.file) {
+            const currentUser = await findUserById(req.params.id);
+            if (currentUser && currentUser.avatar) {
+                const oldAvatarPath = `../Frontend/public/images/user/${currentUser.avatar}`;
+                if (fs.existsSync(oldAvatarPath)) {
+                    fs.unlinkSync(oldAvatarPath);
+                }
+            }
+            updateData.avatar = req.file.filename;
+        }
+
+        const updatedUser = await updateUser(req.params.id, updateData);
 
         res.json({ message: "Cập nhật người dùng thành công", user: updatedUser });
     } catch (err) {

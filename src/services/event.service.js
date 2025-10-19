@@ -38,7 +38,11 @@ export const updateEvent = async (id, data) => {
 };
 
 export const removeEvent = async (id) => {
+    await prisma.ticketType.deleteMany({
+        where: { eventId: Number(id) }
+    });
+
     return await prisma.event.delete({
-        where: { id: Number(id) },
+        where: { id: Number(id) }
     });
 };

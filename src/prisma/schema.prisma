@@ -62,17 +62,18 @@ model Event {
 }
 
 model TicketType {
-    id       Int    @id @default(autoincrement())
-    type     String @db.VarChar(100) // Standard, VIP, v.v.
-    price    Int
-    quantity Int
-    sold     Int?   @default(0)
+    id                  Int    @id @default(autoincrement())
+    type                String @db.VarChar(100) // Standard, VIP, v.v.
+    price               Int
+    quantity            Int
+    description         String   @db.MediumText
+    sold                Int?   @default(0)
 
-    event   Event @relation(fields: [eventId], references: [id])
-    eventId Int
+    event               Event @relation(fields: [eventId], references: [id])
+    eventId             Int
 
-    ticketCartDetails  TicketCartDetail[]
-    ticketOrderDetails TicketOrderDetail[]
+    ticketCartDetails   TicketCartDetail[]
+    ticketOrderDetails  TicketOrderDetail[]
 
     @@map("ticket_types")
 }
@@ -106,7 +107,7 @@ model TicketOrder {
     totalPrice    Int
     receiverPhone String   @db.VarChar(255)
     receiverEmail String?  @db.VarChar(255)
-    status        String   @default("PENDING") // PENDING, CONFIRMED, COMPLETED, CANCELLED
+    status        String   @default("PENDING") // PENDING, COMPLETED, CANCELLED
     paymentMethod String   @default("VNPAY") // BANKING, CREDIT_CARD, etc.
     paymentStatus String // PAYMENT_UNPAID, PAYMENT_SUCCESS, PAYMENT_FAILED
     paymentRef    String?

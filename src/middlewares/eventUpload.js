@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import sharp from "sharp";
 import fs from "fs";
 
-export const fileUploadMiddleware = (fieldName, dir, {
+export const eventUploadMiddleware = (fieldName, dir, {
     maxWidth = 3840,
     maxHeight = 2160,
     minWidth = 1280,
@@ -14,7 +14,7 @@ export const fileUploadMiddleware = (fieldName, dir, {
     return (req, res, next) => {
         const upload = multer({
             storage: multer.diskStorage({
-                destination: "public/images/" + dir,
+                destination: "../Frontend/public/images/" + dir,
                 filename: (req, file, cb) => {
                     cb(null, uuidv4() + path.extname(file.originalname));
                 }
@@ -30,14 +30,21 @@ export const fileUploadMiddleware = (fieldName, dir, {
                 ) {
                     cb(null, true);
                 } else {
-                    cb(new Error("Only JPEG and PNG images are allowed."), false);
+                    cb(new Error("Chỉ chấp nhận ảnh JPEG và PNG."), false);
                 }
             }
         }).single(fieldName);
 
         upload(req, res, async (err) => {
             if (err) {
-                return res.status(400).json({ message: err.message });
+                return res.status(400).json({
+                    errors: [
+                        {
+                            path: "bannerUrl",
+                            message: err.message
+                        }
+                    ],
+                });
             }
 
             if (!req.file) {
@@ -51,14 +58,24 @@ export const fileUploadMiddleware = (fieldName, dir, {
                 if (width > maxWidth || height > maxHeight) {
                     fs.unlinkSync(req.file.path);
                     return res.status(400).json({
-                        message: `Image dimensions too large. Maximum: ${maxWidth}x${maxHeight}px, got: ${width}x${height}px`
+                        errors: [
+                            {
+                                path: "bannerUrl",
+                                message: `Kích thước ảnh quá lớn. Giới hạn: ${maxWidth}x${maxHeight}px, thu được: ${width}x${height}px`
+                            }
+                        ],
                     });
                 }
 
                 if (width < minWidth || height < minHeight) {
                     fs.unlinkSync(req.file.path);
                     return res.status(400).json({
-                        message: `Image dimensions too small. Minimum: ${minWidth}x${minHeight}px, got: ${width}x${height}px`
+                        errors: [
+                            {
+                                path: "bannerUrl",
+                                message: `Kích thước ảnh quá nhỏ. Giới hạn: ${minWidth}x${minHeight}px, thu được: ${width}x${height}px`
+                            }
+                        ],
                     });
                 }
                 next();
@@ -66,7 +83,14 @@ export const fileUploadMiddleware = (fieldName, dir, {
                 if (req.file && fs.existsSync(req.file.path)) {
                     fs.unlinkSync(req.file.path);
                 }
-                return res.status(400).json({ message: "Error processing image: " + error.message });
+                return res.status(400).json({
+                    errors: [
+                        {
+                            path: "bannerUrl",
+                            message: "Lỗi xử lý ảnh: " + error.message
+                        }
+                    ],
+                });
             }
         });
     };

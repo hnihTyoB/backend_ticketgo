@@ -12,6 +12,7 @@ import { PrismaSessionStore } from "@quixo3/prisma-session-store";
 import { PrismaClient } from "@prisma/client";
 import passport from "passport";
 import { configPassportLocal } from "./src/middlewares/passport.local.js";
+// import { initDatabase } from "./src/config/seed.js";
 
 dotenv.config();
 
@@ -23,7 +24,7 @@ app.use(cors({
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-app.use("/images", express.static(path.join(__dirname, "../ticket-go-ptit/public/images")));
+app.use("/images", express.static(path.join(__dirname, "../Frontend/public/images")));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -57,9 +58,7 @@ app.use("/api", checkValidJWT);
 
 apiRoutes(app);
 
-// if (process.env.NODE_ENV !== "production") {
-//     initDatabase();
-// }
+// initDatabase();
 
 const PORT = process.env.PORT;
 app.listen(PORT, () => {
