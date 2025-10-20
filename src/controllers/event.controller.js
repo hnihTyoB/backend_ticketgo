@@ -44,7 +44,10 @@ export const getEventById = async (req, res) => {
 
 export const postCreateEvent = async (req, res) => {
     try {
-        const bannerUrl = req.file ? `/images/event/${req.file.filename}` : "";
+        let bannerUrl = null;
+        if (req.file) {
+            bannerUrl = req.file.filename;
+        }
 
         const eventData = {
             ...req.body,
@@ -81,10 +84,15 @@ export const postCreateEvent = async (req, res) => {
 
 export const putUpdateEvent = async (req, res) => {
     try {
-        let bannerUrl = req.body.bannerUrl || "";
+        const existingEvent = await findEventById(req.params.id);
+        if (!existingEvent) {
+            return res.status(404).json({ error: "Event not found" });
+        }
+
+        let bannerUrl = existingEvent.bannerUrl || null;
 
         if (req.file) {
-            bannerUrl = `/images/event/${req.file.filename}`;
+            bannerUrl = req.file.filename;
         }
 
         const eventData = {

@@ -28,8 +28,8 @@ export const apiRoutes = (app) => {
     const eventRouter = express.Router();
     eventRouter.get("/", getAllEvents);
     eventRouter.get("/:id", getEventById);
-    eventRouter.post("/", isAdmin, eventUploadMiddleware("image", "event"), postCreateEvent);
-    eventRouter.put("/:id", isAdmin, eventUploadMiddleware("image", "event"), putUpdateEvent);
+    eventRouter.post("/", isAdmin, eventUploadMiddleware("bannerUrl", "event"), postCreateEvent);
+    eventRouter.put("/:id", isAdmin, eventUploadMiddleware("bannerUrl", "event"), putUpdateEvent);
     eventRouter.delete("/:id", isAdmin, deleteEvent);
 
     const ticketRouter = express.Router();
