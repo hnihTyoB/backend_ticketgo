@@ -5,6 +5,9 @@ export const findAllEvents = async (page, limit) => {
     const events = await prisma.event.findMany({
         skip: skip,
         take: limit,
+        include: {
+            ticketTypes: true
+        }
     });
     return events;
 };
