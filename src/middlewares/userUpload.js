@@ -18,7 +18,7 @@ export const userUploadMiddleware = (
     return (req, res, next) => {
         const upload = multer({
             storage: multer.diskStorage({
-                destination: "../Frontend/public/images/" + dir,
+                destination: "../ticket-go-ptit/public/images/" + dir,
                 filename: (req, file, cb) => {
                     cb(null, uuidv4() + path.extname(file.originalname));
                 }

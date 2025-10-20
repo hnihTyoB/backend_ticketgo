@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "concurrently \"npm run start-backend\" \"npm run start-frontend\"",
     "start": "concurrently \"npm run start-backend\" \"npm run start-frontend\"",
-    "start-frontend": "cd ../Frontend/ && npm run dev",
+    "start-frontend": "cd ../ticket-go-ptit/ && npm run dev",
     "start-backend": "npm run server",
     "build": "vite build",
     "lint": "eslint .",
