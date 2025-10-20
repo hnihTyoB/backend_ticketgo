@@ -6,7 +6,7 @@ export const getTicketTypes = async (eventId) => {
             eventId: Number(eventId)
         },
         orderBy: {
-            id: 'asc'
+            id: 'desc'
         }
     });
 
@@ -14,13 +14,14 @@ export const getTicketTypes = async (eventId) => {
 };
 
 export const createTicketType = async (eventId, ticketData) => {
-    const { type, price, quantity } = ticketData;
+    const { type, price, quantity, description } = ticketData;
 
     const ticketType = await prisma.ticketType.create({
         data: {
             type,
             price: Number(price),
             quantity: Number(quantity),
+            description,
             sold: 0,
             eventId: Number(eventId)
         },
@@ -33,7 +34,7 @@ export const createTicketType = async (eventId, ticketData) => {
 };
 
 export const updateTicketType = async (id, updateData) => {
-    const { type, price, quantity } = updateData;
+    const { type, price, quantity, description } = updateData;
 
     const ticketType = await prisma.ticketType.update({
         where: {
@@ -42,7 +43,8 @@ export const updateTicketType = async (id, updateData) => {
         data: {
             type,
             price: Number(price),
-            quantity: Number(quantity)
+            quantity: Number(quantity),
+            description
         },
         include: {
             event: true

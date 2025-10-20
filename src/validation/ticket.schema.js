@@ -9,5 +9,9 @@ export const ticketTypeSchema = z.object({
         .min(0, "Giá vé không được âm"),
     quantity: z.number()
         .int("Số lượng phải là số nguyên")
-        .min(1, "Số lượng phải lớn hơn 0")
+        .min(1, "Số lượng phải lớn hơn 0"),
+    description: z.string()
+        .trim()
+        .min(5, "Mô tả vé phải có ít nhất 5 ký tự")
+        .max(255, "Mô tả vé không được quá 255 ký tự")
 });
