@@ -155,7 +155,7 @@ export const handlePlaceOrder = async (
     receiverPhone,
     receiverEmail,
     totalPrice,
-    paymentMethod = "COD"
+    paymentMethod = "VNPAY"
 ) => {
     try {
         await prisma.$transaction(async (tx) => {
