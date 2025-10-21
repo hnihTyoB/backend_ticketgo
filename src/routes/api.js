@@ -1,4 +1,7 @@
 import express from "express";
+import passport from "passport";
+import jwt from "jsonwebtoken";
+import process from "process";
 import { postCreateUser, getAllUsers, getUserById, putUpdateUser, deleteUser, getAllRoles } from "../controllers/user.controller.js";
 import { deleteEvent, getAllEvents, getEventById, postCreateEvent, putUpdateEvent } from "../controllers/event.controller.js";
 import { getAllOrders, getOrderById, putUpdateStatus } from "../controllers/order.controller.js";
@@ -16,6 +19,51 @@ export const apiRoutes = (app) => {
     authRouter.get("/success", successRedirect);
     authRouter.post("/register", userRegister);
     authRouter.post("/logout", userLogout);
+
+    // Google OAuth routes
+    authRouter.get("/google",
+        passport.authenticate("google", { scope: ["profile", "email"] })
+    );
+
+    authRouter.get("/google/callback",
+        passport.authenticate("google", { 
+            failureRedirect: `${process.env.CLIENT_URL}/?error=google_auth_failed`,
+            session: false 
+        }),
+        (req, res) => {
+            try {
+                const user = req.user;
+                if (!user) {
+                    return res.redirect(`${process.env.CLIENT_URL}/?error=no_user`);
+                }
+
+                // Tạo JWT token
+                const payload = {
+                    id: user.id,
+                    fullName: user.fullName,
+                    phone: user.phone,
+                    email: user.email,
+                    birthDate: user.birthDate,
+                    gender: user.gender,
+                    avatar: user.avatar,
+                    accountType: user.accountType,
+                    role: user.role,
+                };
+
+                const secret = process.env.JWT_SECRET;
+                const expiresIn = process.env.JWT_EXPIRES_IN || "7d";
+                const token = jwt.sign(payload, secret, { expiresIn });
+
+                console.log(">> Google OAuth success, redirecting with token");
+                
+                // Redirect về frontend với token
+                res.redirect(`${process.env.CLIENT_URL}/auth/callback?token=${token}`);
+            } catch (error) {
+                console.error("Google callback error:", error);
+                res.redirect(`${process.env.CLIENT_URL}/?error=callback_failed`);
+            }
+        }
+    );
 
     const userRouter = express.Router();
     userRouter.get("/", getAllUsers);

@@ -12,6 +12,7 @@ import { PrismaSessionStore } from "@quixo3/prisma-session-store";
 import { PrismaClient } from "@prisma/client";
 import passport from "passport";
 import { configPassportLocal } from "./src/middlewares/passport.local.js";
+import { configPassportGoogle } from "./src/middlewares/passport.google.js";
 // import { initDatabase } from "./src/config/seed.js";
 
 dotenv.config();
@@ -20,6 +21,7 @@ const app = express();
 
 app.use(cors({
     origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:8888'],
+    credentials: true,
 }));
 
 const __filename = fileURLToPath(import.meta.url);
@@ -53,6 +55,7 @@ app.use(passport.initialize());
 app.use(passport.authenticate('session'));
 
 configPassportLocal();
+configPassportGoogle();
 
 app.use("/api", checkValidJWT);
 
