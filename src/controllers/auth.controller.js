@@ -7,7 +7,10 @@ export const userLogin = async (req, res) => {
         if (!validation.success) {
             return res.status(400).json({
                 message: "Dữ liệu không hợp lệ",
-                errors: validation.error.issues.map(err => err.message)
+                errors: validation.error.issues.map(err => ({
+                    path: err.path[0],
+                    message: err.message
+                }))
             });
         }
 
@@ -28,7 +31,10 @@ export const userRegister = async (req, res) => {
         if (!validation.success) {
             return res.status(400).json({
                 message: "Dữ liệu không hợp lệ",
-                errors: validation.error.issues.map(err => err.message)
+                errors: validation.error.issues.map(err => ({
+                    path: err.path[0],
+                    message: err.message
+                }))
             });
         }
 
