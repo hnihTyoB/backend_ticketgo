@@ -1,13 +1,16 @@
 import { prisma } from "../config/client.js";
 
-export const findAllEvents = async (page, limit) => {
+export const findAllEvents = async (page, limit, sort) => {
     const skip = (page - 1) * limit;
     const events = await prisma.event.findMany({
         skip: skip,
         take: limit,
         include: {
             ticketTypes: true
-        }
+        },
+        orderBy: {
+            startDate: sort
+        },
     });
     return events;
 };
