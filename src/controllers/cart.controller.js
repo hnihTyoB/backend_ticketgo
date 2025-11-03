@@ -25,7 +25,7 @@ export const addTicketToCart = async (req, res) => {
         return res.status(401).json({
             success: false,
             message: "Bạn chưa đăng nhập",
-            redirect: "/login"
+            // redirect: "/login"
         });
     }
 
@@ -62,7 +62,7 @@ export const getCart = async (req, res) => {
         return res.status(401).json({
             success: false,
             message: "Bạn chưa đăng nhập",
-            redirect: "/login",
+            // redirect: "/login",
         });
     }
 
@@ -93,7 +93,7 @@ export const updateQuantity = async (req, res) => {
         return res.status(401).json({
             success: false,
             message: "Bạn chưa đăng nhập",
-            redirect: "/login"
+            // redirect: "/login"
         });
     }
 
@@ -130,7 +130,7 @@ export const removeTicketFromCart = async (req, res) => {
         return res.status(401).json({
             success: false,
             message: "Bạn chưa đăng nhập",
-            redirect: "/login"
+            // redirect: "/login"
         });
     }
 
@@ -150,13 +150,16 @@ export const handleCartToCheckout = async (req, res) => {
         return res.status(401).json({
             success: false,
             message: "Bạn chưa đăng nhập",
-            redirect: "/login",
+            // redirect: "/login",
         });
     }
     try {
         const orderData = {
             cartId: Number(req.body.cartId),
             currentCartDetails: req.body.currentCartDetails || [],
+            receiverName: req.body.receiverName,
+            receiverPhone: req.body.receiverPhone,
+            receiverEmail: req.body.receiverEmail || null,
         };
         const validate = await prepareCheckoutSchema.safeParseAsync(orderData);
         if (!validate.success) {
@@ -169,9 +172,17 @@ export const handleCartToCheckout = async (req, res) => {
                 }))
             });
         }
-        const { cartId, currentCartDetails } = validate.data;
+        const { cartId, currentCartDetails, receiverName, receiverPhone, receiverEmail } = validate.data;
         await prepareCartBeforeCheckout(currentCartDetails, cartId);
-        return res.status(200).json({ success: true, message: "Chuyển sang trang thanh toán", redirect: "/checkout" });
+        return res.status(200).json({
+            success: true,
+            message: "Thông tin hợp lệ, chuyển sang trang thanh toán",
+            data: {
+                receiverName,
+                receiverPhone,
+                receiverEmail
+            }
+        });
     } catch (error) {
         console.error("HandleCartToCheckout error:", error);
         return res.status(500).json({ success: false, message: "Lỗi khi chuyển sang trang thanh toán" });
@@ -185,7 +196,7 @@ export const checkOut = async (req, res) => {
         return res.status(401).json({
             success: false,
             message: "Bạn chưa đăng nhập",
-            redirect: "/login",
+            // redirect: "/login",
         });
     }
 
@@ -214,7 +225,7 @@ export const placeOrder = async (req, res) => {
         return res.status(401).json({
             success: false,
             message: "Bạn chưa đăng nhập",
-            redirect: "/login",
+            // redirect: "/login",
         });
     }
 
@@ -279,7 +290,7 @@ export const getThanks = async (req, res) => {
         return res.status(401).json({
             success: false,
             message: "Bạn chưa đăng nhập",
-            redirect: "/login"
+            // redirect: "/login"
         });
     }
 
@@ -296,7 +307,7 @@ export const getOrderHistory = async (req, res) => {
         return res.status(401).json({
             success: false,
             message: "Bạn chưa đăng nhập",
-            redirect: "/login"
+            // redirect: "/login"
         });
     }
 

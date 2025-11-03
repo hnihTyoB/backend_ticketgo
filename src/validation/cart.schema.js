@@ -40,6 +40,25 @@ export const prepareCheckoutSchema = z.object({
             })
         )
         .min(1, "Giỏ hàng không được trống"),
+    receiverName: z
+        .string({ required_error: "Tên người nhận là bắt buộc" })
+        .trim()
+        .min(2, "Tên người nhận phải có ít nhất 2 ký tự")
+        .max(255, "Tên người nhận không được quá 255 ký tự"),
+    receiverPhone: z
+        .string({ required_error: "Số điện thoại là bắt buộc" })
+        .trim()
+        .refine((phone) => phoneRegex.test(phone), {
+            message: "Số điện thoại không hợp lệ",
+        }),
+    receiverEmail: z
+        .string()
+        .trim()
+        .refine((email) => !email || emailRegex.test(email), {
+            message: "Email không đúng định dạng",
+        })
+        .optional()
+        .nullable(),
 });
 
 export const placeOrderSchema = z.object({
