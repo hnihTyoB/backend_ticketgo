@@ -1,6 +1,6 @@
 import { prisma } from "../config/client.js";
 
-export const addToCart = async (ticketTypeId, quantity, user) => {
+export const addToCart = async (ticketTypeId, quantity, userId) => {
     const ticketType = await prisma.ticketType.findUnique({
         where: { id: Number(ticketTypeId) },
         include: { event: true },
@@ -8,21 +8,30 @@ export const addToCart = async (ticketTypeId, quantity, user) => {
 
     if (!ticketType) throw new Error("Loại vé không tồn tại.");
 
+    if (new Date(ticketType.event.startDate) <= new Date()) {
+        throw new Error("Không thể mua vé của sự kiện đã diễn ra.");
+    }
+
+    const availableQuantity = ticketType.quantity - (ticketType.sold || 0);
+    if (availableQuantity < quantity) {
+        throw new Error(`Số lượng vé còn lại không đủ. Chỉ còn ${availableQuantity} vé.`);
+    }
+
     let cart = await prisma.ticketCart.findUnique({
-        where: { userId: user.id },
+        where: { userId: Number(userId) },
     });
 
     if (!cart) {
         cart = await prisma.ticketCart.create({
             data: {
-                userId: user.id,
-                sum: quantity,
+                userId: Number(userId),
+                sum: Number(quantity),
             },
         });
     } else {
         await prisma.ticketCart.update({
             where: { id: cart.id },
-            data: { sum: { increment: quantity } },
+            data: { sum: { increment: Number(quantity) } },
         });
     }
 
@@ -36,12 +45,12 @@ export const addToCart = async (ticketTypeId, quantity, user) => {
     if (existingItem) {
         await prisma.ticketCartDetail.update({
             where: { id: existingItem.id },
-            data: { quantity: { increment: quantity } },
+            data: { quantity: { increment: Number(quantity) } },
         });
     } else {
         await prisma.ticketCartDetail.create({
             data: {
-                quantity,
+                quantity: Number(quantity),
                 price: ticketType.price,
                 cartId: cart.id,
                 ticketTypeId: Number(ticketTypeId),
@@ -64,7 +73,30 @@ export const ticketTypeInCart = async (userId) => {
         },
     });
 
-    return cart ? cart.ticketCartDetails : [];
+    if (!cart || !cart.ticketCartDetails.length) {
+        return [];
+    }
+
+    // Kiểm tra và cập nhật giá nếu có thay đổi
+    const updatedDetails = await Promise.all(
+        cart.ticketCartDetails.map(async (detail) => {
+            const currentTicketType = await prisma.ticketType.findUnique({
+                where: { id: detail.ticketTypeId },
+            });
+
+            // Nếu giá thay đổi, cập nhật lại
+            if (currentTicketType && currentTicketType.price !== detail.price) {
+                await prisma.ticketCartDetail.update({
+                    where: { id: detail.id },
+                    data: { price: currentTicketType.price },
+                });
+                return { ...detail, price: currentTicketType.price };
+            }
+            return detail;
+        })
+    );
+
+    return updatedDetails;
 };
 
 export const removeFromCart = async (cartDetailId, userId) => {
@@ -120,7 +152,11 @@ export const updateCartItemQuantity = async (cartDetailId, newQuantity, userId) 
 
 export const prepareCartBeforeCheckout = async (currentCartDetails, cartId) => {
     if (!Array.isArray(currentCartDetails) || !cartId) {
-        throw new Error("Invalid input data");
+        throw new Error("Dữ liệu không hợp lệ");
+    }
+
+    if (currentCartDetails.length === 0) {
+        throw new Error("Giỏ hàng trống. Vui lòng thêm vé vào giỏ hàng.");
     }
 
     await prisma.$transaction(async (tx) => {
@@ -131,7 +167,9 @@ export const prepareCartBeforeCheckout = async (currentCartDetails, cartId) => {
                 const id = Number(item.id);
                 const qty = Number(item.quantity);
 
-                if (isNaN(id) || isNaN(qty)) return;
+                if (isNaN(id) || isNaN(qty) || qty <= 0) {
+                    throw new Error(`Số lượng không hợp lệ cho item ID: ${item.id}`);
+                }
 
                 totalQuantity += qty;
 
@@ -161,17 +199,46 @@ export const handlePlaceOrder = async (
         await prisma.$transaction(async (tx) => {
             const cart = await tx.ticketCart.findUnique({
                 where: { userId: Number(userId) },
-                include: { ticketCartDetails: true },
+                include: {
+                    ticketCartDetails: {
+                        include: {
+                            ticketType: {
+                                include: { event: true }
+                            }
+                        }
+                    }
+                },
             });
 
             if (!cart || !cart.ticketCartDetails.length) {
                 throw new Error("Giỏ hàng trống hoặc không tồn tại.");
             }
 
+            // Tính tổng giá từ cart
+            const calculatedTotalPrice = cart.ticketCartDetails.reduce(
+                (sum, item) => sum + (item.price * item.quantity),
+                0
+            );
+
+            // Validate totalPrice phải khớp với giá trong giỏ
+            if (Math.abs(calculatedTotalPrice - Number(totalPrice)) > 1) {
+                throw new Error("Tổng giá không khớp với giỏ hàng. Vui lòng làm mới trang.");
+            }
+
             for (const item of cart.ticketCartDetails) {
-                const type = await tx.ticketType.findUnique({ where: { id: item.ticketTypeId } });
-                if (!type || type.quantity < item.quantity) {
-                    throw new Error(`Loại vé "${type?.type ?? "Không xác định"}" không đủ số lượng!`);
+                const type = item.ticketType;
+
+                if (new Date(type.event.startDate) <= new Date()) {
+                    throw new Error(`Sự kiện "${type.event.title}" đã diễn ra.`);
+                }
+
+                const availableQuantity = type.quantity - (type.sold || 0);
+                if (availableQuantity < item.quantity) {
+                    throw new Error(`Loại vé "${type.type}" không đủ số lượng! Chỉ còn ${availableQuantity} vé.`);
+                }
+
+                if (type.price !== item.price) {
+                    throw new Error(`Giá vé "${type.type}" đã thay đổi. Vui lòng cập nhật giỏ hàng.`);
                 }
             }
 
@@ -195,6 +262,7 @@ export const handlePlaceOrder = async (
                 },
             });
 
+            // Cập nhật số lượng và số lượng đã bán cho từng loại vé
             for (const item of cart.ticketCartDetails) {
                 await tx.ticketType.update({
                     where: { id: item.ticketTypeId },
@@ -216,7 +284,14 @@ export const handlePlaceOrder = async (
     }
 };
 
-export const orderHistory = async (userId) => {
+export const countTotalOrderPages = async (limit) => {
+    const totalItems = await prisma.ticketOrder.count();
+    return Math.ceil(totalItems / limit);
+}
+
+export const orderHistory = async (userId, page, limit) => {
+    const skip = (page - 1) * limit;
+
     const orders = await prisma.ticketOrder.findMany({
         where: { userId: Number(userId) },
         include: {
@@ -227,6 +302,15 @@ export const orderHistory = async (userId) => {
             },
         },
         orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
     });
     return orders;
+};
+
+export const calculateCartTotal = (cartDetails) => {
+    if (!Array.isArray(cartDetails) || cartDetails.length === 0) {
+        return 0;
+    }
+    return cartDetails.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 };

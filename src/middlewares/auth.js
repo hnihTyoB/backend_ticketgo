@@ -4,7 +4,7 @@ export const isLogin = (req, res, next) => {
     }
     return res.status(401).json({
         message: "You are not logged in.",
-        redirect: "/login"
+        // redirect: "/login"
     });
 };
 
@@ -14,7 +14,7 @@ export const isAdmin = (req, res, next) => {
     if (!user) {
         return res.status(401).json({
             message: "You are not logged in.",
-            redirect: "/login"
+            // redirect: "/login"
         });
     }
 
@@ -24,7 +24,7 @@ export const isAdmin = (req, res, next) => {
 
     return res.status(403).json({
         message: "You do not have permission to access this function.",
-        redirect: "/"
+        // redirect: "/"
     });
 };
 
