@@ -28,40 +28,35 @@ const getMonthRange = () => {
     return { startOfMonth, endOfMonth };
 };
 
-export const findAllEventsWithFilter = async (page, limit, category, week, month, sort, search) => {
+export const findAllEventsWithFilter = async (page, limit, search, category, week, month, sort) => {
     const skip = (page - 1) * limit;
 
     let whereCondition = {};
 
+    if (search) {
+        whereCondition.title = {
+            contains: search
+        };
+    }
+
     if (week) {
         const { startOfWeek, endOfWeek } = getWeekRange();
-        whereCondition = {
-            startDate: {
-                gte: startOfWeek,
-                lte: endOfWeek
-            }
+        whereCondition.startDate = {
+            gte: startOfWeek,
+            lte: endOfWeek
         };
     }
 
     if (month) {
         const { startOfMonth, endOfMonth } = getMonthRange();
-        whereCondition = {
-            startDate: {
-                gte: startOfMonth,
-                lte: endOfMonth
-            }
+        whereCondition.startDate = {
+            gte: startOfMonth,
+            lte: endOfMonth
         };
     }
 
     if (category) {
         whereCondition.category = category;
-    }
-
-    if (search) {
-        whereCondition.title = {
-            contains: search,
-            mode: 'insensitive'
-        };
     }
 
     const events = await prisma.event.findMany({
@@ -79,38 +74,33 @@ export const findAllEventsWithFilter = async (page, limit, category, week, month
     return events;
 };
 
-export const countTotalEventPagesWithFilter = async (limit, category, week, month, search) => {
+export const countTotalEventPagesWithFilter = async (limit, search, category, week, month) => {
     let whereCondition = {};
+
+    if (search) {
+        whereCondition.title = {
+            contains: search
+        };
+    }
 
     if (week) {
         const { startOfWeek, endOfWeek } = getWeekRange();
-        whereCondition = {
-            startDate: {
-                gte: startOfWeek,
-                lte: endOfWeek
-            }
+        whereCondition.startDate = {
+            gte: startOfWeek,
+            lte: endOfWeek
         };
     }
 
     if (month) {
         const { startOfMonth, endOfMonth } = getMonthRange();
-        whereCondition = {
-            startDate: {
-                gte: startOfMonth,
-                lte: endOfMonth
-            }
+        whereCondition.startDate = {
+            gte: startOfMonth,
+            lte: endOfMonth
         };
     }
 
     if (category) {
         whereCondition.category = category;
-    }
-
-    if (search) {
-        whereCondition.title = {
-            contains: search,
-            mode: 'insensitive'
-        };
     }
 
     const totalItems = await prisma.event.count({

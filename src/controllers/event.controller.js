@@ -15,11 +15,10 @@ export const getAllEvents = async (req, res) => {
         const page = Number(req.query.page) || 1;
         const limit = Number(req.query.limit) || TOTAL_ITEM_PER_PAGE;
         const sort = req.query.sort || 'asc';
-        const search = req.query.search || null;
 
         const [events, totalPages] = await Promise.all([
-            findAllEvents(page, limit, sort, search),
-            countTotalEventPages(limit, search),
+            findAllEvents(page, limit, sort),
+            countTotalEventPages(limit),
         ]);
 
         res.status(200).json({
@@ -39,16 +38,21 @@ export const getAllEventsWithFilter = async (req, res) => {
     try {
         const page = Number(req.query.page) || 1;
         const limit = Number(req.query.limit) || TOTAL_ITEM_PER_PAGE;
+        const search = req.query.search || null;
         const category = req.query.category || null;
         const week = req.query.week === 'true' || req.query.week === true;
         const month = req.query.month === 'true' || req.query.month === true;
         const sort = req.query.sort || 'asc';
-        const search = req.query.search || null;
 
-        const events = await findAllEventsWithFilter(page, limit, category, week, month, sort, search);
-        const totalPages = await countTotalEventPagesWithFilter(limit, category, week, month, search);
+        const [events, totalPages] = await Promise.all([
+            findAllEventsWithFilter(page, limit, search, category, week, month, sort),
+            countTotalEventPagesWithFilter(limit, search, category, week, month),
+        ]);
 
-        res.status(200).json({ events, totalPages });
+        res.status(200).json({
+            events,
+            totalPages,
+        });
     } catch (err) {
         console.error("Lỗi khi lấy danh sách sự kiện:", err);
         res.status(500).json({
