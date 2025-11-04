@@ -1,4 +1,5 @@
 import { TOTAL_ITEM_PER_PAGE } from "../config/constant.js";
+import { countTotalEventPagesWithFilter, findAllEventsWithFilter } from "../services/event.filter.js";
 import {
     countTotalEventPages,
     findAllEvents,
@@ -13,10 +14,39 @@ export const getAllEvents = async (req, res) => {
     try {
         const page = Number(req.query.page) || 1;
         const limit = Number(req.query.limit) || TOTAL_ITEM_PER_PAGE;
+        const sort = req.query.sort || 'asc';
 
         const [events, totalPages] = await Promise.all([
-            findAllEvents(page, limit),
+            findAllEvents(page, limit, sort),
             countTotalEventPages(limit),
+        ]);
+
+        res.status(200).json({
+            events,
+            totalPages,
+        });
+    } catch (err) {
+        console.error("Lỗi khi lấy danh sách sự kiện:", err);
+        res.status(500).json({
+            message: "Lỗi server",
+            error: err.message
+        });
+    }
+};
+
+export const getAllEventsWithFilter = async (req, res) => {
+    try {
+        const page = Number(req.query.page) || 1;
+        const limit = Number(req.query.limit) || TOTAL_ITEM_PER_PAGE;
+        const search = req.query.search || null;
+        const category = req.query.category || null;
+        const week = req.query.week === 'true' || req.query.week === true;
+        const month = req.query.month === 'true' || req.query.month === true;
+        const sort = req.query.sort || 'asc';
+
+        const [events, totalPages] = await Promise.all([
+            findAllEventsWithFilter(page, limit, search, category, week, month, sort),
+            countTotalEventPagesWithFilter(limit, search, category, week, month),
         ]);
 
         res.status(200).json({

@@ -105,6 +105,7 @@ model TicketCartDetail {
 model TicketOrder {
     id            Int      @id @default(autoincrement())
     totalPrice    Int
+    receiverName  String   @db.VarChar(255)
     receiverPhone String   @db.VarChar(255)
     receiverEmail String?  @db.VarChar(255)
     status        String   @default("PENDING") // PENDING, COMPLETED, CANCELLED

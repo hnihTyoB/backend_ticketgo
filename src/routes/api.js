@@ -3,7 +3,7 @@ import passport from "passport";
 import jwt from "jsonwebtoken";
 import process from "process";
 import { postCreateUser, getAllUsers, getUserById, putUpdateUser, deleteUser, getAllRoles } from "../controllers/user.controller.js";
-import { deleteEvent, getAllEvents, getEventById, postCreateEvent, putUpdateEvent } from "../controllers/event.controller.js";
+import { deleteEvent, getAllEvents, getAllEventsWithFilter, getEventById, postCreateEvent, putUpdateEvent } from "../controllers/event.controller.js";
 import { getAllOrders, getOrderById, putUpdateStatus } from "../controllers/order.controller.js";
 import { successRedirect, userLogin, userLogout, userRegister } from "../controllers/auth.controller.js";
 import { addTicketToCart, checkOut, getCart, getOrderHistory, getThanks, handleCartToCheckout, placeOrder, removeTicketFromCart, updateQuantity } from "../controllers/cart.controller.js";
@@ -74,7 +74,8 @@ export const apiRoutes = (app) => {
     userRouter.delete("/:id", deleteUser);
 
     const eventRouter = express.Router();
-    eventRouter.get("/", getAllEvents);
+    // eventRouter.get("/", getAllEvents);
+    eventRouter.get("/", getAllEventsWithFilter);
     eventRouter.get("/:id", getEventById);
     eventRouter.post("/", isAdmin, eventUploadMiddleware("bannerUrl", "event"), postCreateEvent);
     eventRouter.put("/:id", isAdmin, eventUploadMiddleware("bannerUrl", "event"), putUpdateEvent);
