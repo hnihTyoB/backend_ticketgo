@@ -59,8 +59,12 @@ export const addToCart = async (ticketTypeId, quantity, userId) => {
     }
 };
 
-export const ticketTypeInCart = async (userId) => {
-    const cart = await prisma.ticketCart.findUnique({
+export const ticketTypeInCart = async (userId, page, limit) => {
+    const skip = (page - 1) * limit;
+
+    const cart = await prisma.ticketCart.findMany({
+        skip: skip,
+        take: limit,
         where: { userId: Number(userId) },
         include: {
             ticketCartDetails: {
@@ -73,30 +77,38 @@ export const ticketTypeInCart = async (userId) => {
         },
     });
 
-    if (!cart || !cart.ticketCartDetails.length) {
+    if (!cart.length) {
         return [];
     }
 
     // Kiểm tra và cập nhật giá nếu có thay đổi
     const updatedDetails = await Promise.all(
-        cart.ticketCartDetails.map(async (detail) => {
+        cart.map(async (item) => {
             const currentTicketType = await prisma.ticketType.findUnique({
-                where: { id: detail.ticketTypeId },
+                where: { id: item.ticketTypeId },
             });
 
             // Nếu giá thay đổi, cập nhật lại
-            if (currentTicketType && currentTicketType.price !== detail.price) {
+            if (currentTicketType && currentTicketType.price !== item.price) {
                 await prisma.ticketCartDetail.update({
-                    where: { id: detail.id },
+                    where: { id: item.id },
                     data: { price: currentTicketType.price },
                 });
-                return { ...detail, price: currentTicketType.price };
+                return { ...item, price: currentTicketType.price };
             }
-            return detail;
+            return item;
         })
     );
 
     return updatedDetails;
+};
+
+export const countTotalCartPages = async (userId, limit) => {
+    const totalItems = await prisma.ticketCart.count({
+        where: { userId: Number(userId) },
+    });
+    const totalPages = Math.ceil(totalItems / limit);
+    return totalPages;
 };
 
 export const removeFromCart = async (cartDetailId, userId) => {
@@ -282,30 +294,6 @@ export const handlePlaceOrder = async (
         console.error("HandlePlaceOrder error:", error);
         return error.message;
     }
-};
-
-export const countTotalOrderPages = async (limit) => {
-    const totalItems = await prisma.ticketOrder.count();
-    return Math.ceil(totalItems / limit);
-}
-
-export const orderHistory = async (userId, page, limit) => {
-    const skip = (page - 1) * limit;
-
-    const orders = await prisma.ticketOrder.findMany({
-        where: { userId: Number(userId) },
-        include: {
-            ticketOrderDetails: {
-                include: {
-                    ticketType: { include: { event: true } },
-                },
-            },
-        },
-        orderBy: { createdAt: "desc" },
-        skip,
-        take: limit,
-    });
-    return orders;
 };
 
 export const calculateCartTotal = (cartDetails) => {

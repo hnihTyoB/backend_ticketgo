@@ -1,9 +1,9 @@
 import express from "express";
 import { postCreateUser, getAllUsers, getUserById, putUpdateUser, deleteUser, getAllRoles } from "../controllers/user.controller.js";
 import { deleteEvent, getAllEventsWithFilter, getEventById, postCreateEvent, putUpdateEvent } from "../controllers/event.controller.js";
-import { getAllOrders, getOrderById, putUpdateStatus } from "../controllers/order.controller.js";
+import { getAllOrders, getOrderById, getOrderHistory, putUpdateStatus } from "../controllers/order.controller.js";
 import { successRedirect, userLogin, userLogout, userRegister } from "../controllers/auth.controller.js";
-import { addTicketToCart, checkOut, getCart, getOrderHistory, getThanks, handleCartToCheckout, placeOrder, removeTicketFromCart, updateQuantity } from "../controllers/cart.controller.js";
+import { addTicketToCart, checkOut, getCart, getThanks, handleCartToCheckout, placeOrder, removeTicketFromCart, updateQuantity } from "../controllers/cart.controller.js";
 import { getDashboard } from "../controllers/dashboard.controller.js";
 import { getTicketTypesByEvent, postCreateTicketTypeById, putUpdateTicketTypeById, deleteTicketTypeById, putUpdateTicketSoldById } from "../controllers/ticket.controller.js";
 import { isAdmin, isLogin, isOwnerOrAdmin } from "../middlewares/auth.js";
@@ -49,12 +49,12 @@ export const apiRoutes = (app) => {
     cartRouter.get("/checkout", checkOut);
     cartRouter.post("/place-order", placeOrder);
     cartRouter.get("/thanks", getThanks);
-    cartRouter.get("/order-history", getOrderHistory);
 
     const orderRouter = express.Router();
-    orderRouter.get("/", getAllOrders);
-    orderRouter.get("/:id", getOrderById);
-    orderRouter.put("/:id", putUpdateStatus);
+    orderRouter.get("/", isAdmin, getAllOrders);
+    orderRouter.get("/history", isLogin, getOrderHistory);
+    orderRouter.get("/:id", isOwnerOrAdmin, getOrderById);
+    orderRouter.put("/:id", isAdmin, putUpdateStatus);
 
     const dashboardRouter = express.Router();
     dashboardRouter.get("/count", getDashboard);
@@ -64,6 +64,6 @@ export const apiRoutes = (app) => {
     app.use("/api/events", eventRouter);
     app.use("/api/tickets", ticketRouter);
     app.use("/api/carts", isLogin, cartRouter);
-    app.use("/api/orders", isAdmin, orderRouter);
+    app.use("/api/orders", orderRouter);
     app.use("/api/dashboard", isAdmin, dashboardRouter);
 };

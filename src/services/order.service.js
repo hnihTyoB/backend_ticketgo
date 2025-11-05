@@ -24,7 +24,7 @@ export const findAllOrders = async (page, limit) => {
     return orders;
 };
 
-export const countTotalOrderPages = async (limit) => {
+export const countAllOrderPages = async (limit) => {
     const totalItems = await prisma.ticketOrder.count();
     const totalPages = Math.ceil(totalItems / limit);
     return totalPages;
@@ -46,6 +46,103 @@ export const findOrderById = async (id) => {
             },
         },
     });
+};
+
+export const findOrderHistoryByUser = async (userId, page, limit, status = null, eventTime = "UPCOMING") => {
+    const skip = (page - 1) * limit;
+
+    const whereCondition = {
+        userId: Number(userId)
+    };
+
+    if (status) {
+        whereCondition.status = status;
+    }
+
+    if (eventTime) {
+        const now = new Date();
+        if (eventTime === 'UPCOMING') {
+            whereCondition.ticketOrderDetails = {
+                some: {
+                    ticketType: {
+                        event: {
+                            startDate: { gt: now }
+                        }
+                    }
+                }
+            };
+        } else if (eventTime === 'PAST') {
+            whereCondition.ticketOrderDetails = {
+                some: {
+                    ticketType: {
+                        event: {
+                            startDate: { lte: now }
+                        }
+                    }
+                }
+            };
+        }
+    }
+
+    return await prisma.ticketOrder.findMany({
+        skip: skip,
+        take: limit,
+        where: whereCondition,
+        include: {
+            user: true,
+            ticketOrderDetails: {
+                include: {
+                    ticketType: {
+                        include: {
+                            event: true,
+                        },
+                    },
+                },
+            },
+        },
+        orderBy: { createdAt: "desc" },
+    });
+};
+
+export const countTotalOrderHistoryPages = async (userId, limit, status = null, eventTime = "UPCOMING") => {
+    const whereCondition = {
+        userId: Number(userId)
+    };
+
+    if (status) {
+        whereCondition.status = status;
+    }
+
+    if (eventTime) {
+        const now = new Date();
+        if (eventTime === 'UPCOMING') {
+            whereCondition.ticketOrderDetails = {
+                some: {
+                    ticketType: {
+                        event: {
+                            startDate: { gt: now }
+                        }
+                    }
+                }
+            };
+        } else if (eventTime === 'PAST') {
+            whereCondition.ticketOrderDetails = {
+                some: {
+                    ticketType: {
+                        event: {
+                            startDate: { lte: now }
+                        }
+                    }
+                }
+            };
+        }
+    }
+
+    const totalItems = await prisma.ticketOrder.count({
+        where: whereCondition,
+    });
+    const totalPages = Math.ceil(totalItems / limit);
+    return totalPages;
 };
 
 export const updateStatus = async (id, status) => {

@@ -5,10 +5,9 @@ import {
     removeFromCart,
     prepareCartBeforeCheckout,
     handlePlaceOrder,
-    orderHistory,
     ticketTypeInCart,
     calculateCartTotal,
-    countTotalOrderPages
+    countTotalCartPages
 } from "../services/cart.service.js";
 import {
     addToCartSchema,
@@ -67,15 +66,47 @@ export const getCart = async (req, res) => {
     }
 
     try {
-        const cartDetails = await ticketTypeInCart(user.id);
-        const totalPrice = calculateCartTotal(cartDetails);
-        const cartId = cartDetails.length ? cartDetails[0].cartId : null;
+        const page = Number(req.query.page) || 1;
+        const limit = Number(req.query.limit) || TOTAL_ITEM_PER_PAGE;
+        const [cartDetails, totalPages] = await Promise.all([
+            ticketTypeInCart(user.id, page, limit),
+            countTotalCartPages(user.id, limit),
+        ]);
 
         return res.status(200).json({
             success: true,
             cartDetails,
-            totalPrice,
-            cartId
+            totalPages,
+        });
+    } catch (error) {
+        console.error("GetCart error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Lỗi khi lấy giỏ hàng"
+        });
+    }
+};
+
+export const getCartWithFilter = async (req, res) => {
+    const user = req.user;
+
+    if (!user) {
+        return res.status(401).json({
+            success: false,
+            message: "Bạn chưa đăng nhập",
+            // redirect: "/login",
+        });
+    }
+
+    try {
+        const page = Number(req.query.page) || 1;
+        const limit = Number(req.query.limit) || TOTAL_ITEM_PER_PAGE;
+
+        const cartDetails = await ticketTypeInCart(user.id, page, limit);
+
+        return res.status(200).json({
+            success: true,
+            cartDetails,
         });
     } catch (error) {
         console.error("GetCart error:", error);
@@ -298,37 +329,4 @@ export const getThanks = async (req, res) => {
         success: true,
         message: "Đặt vé thành công",
     });
-};
-
-export const getOrderHistory = async (req, res) => {
-    const user = req.user;
-
-    if (!user) {
-        return res.status(401).json({
-            success: false,
-            message: "Bạn chưa đăng nhập",
-            // redirect: "/login"
-        });
-    }
-
-    try {
-        const page = Number(req.query.page) || 1;
-        const limit = Number(req.query.limit) || TOTAL_ITEM_PER_PAGE;
-
-        const [orders, totalPages] = await Promise.all([
-            orderHistory(user.id, page, limit),
-            countTotalOrderPages(limit),
-        ]);
-
-        res.status(200).json({
-            orders,
-            totalPages,
-        });
-    } catch (err) {
-        console.error("Lỗi khi lấy danh sách đơn hàng:", err);
-        res.status(500).json({
-            message: "Lỗi server",
-            error: err.message
-        });
-    }
 };
