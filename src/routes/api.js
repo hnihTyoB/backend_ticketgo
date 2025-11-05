@@ -1,12 +1,12 @@
 import express from "express";
 import { postCreateUser, getAllUsers, getUserById, putUpdateUser, deleteUser, getAllRoles } from "../controllers/user.controller.js";
-import { deleteEvent, getAllEvents, getAllEventsWithFilter, getEventById, postCreateEvent, putUpdateEvent } from "../controllers/event.controller.js";
+import { deleteEvent, getAllEventsWithFilter, getEventById, postCreateEvent, putUpdateEvent } from "../controllers/event.controller.js";
 import { getAllOrders, getOrderById, putUpdateStatus } from "../controllers/order.controller.js";
 import { successRedirect, userLogin, userLogout, userRegister } from "../controllers/auth.controller.js";
 import { addTicketToCart, checkOut, getCart, getOrderHistory, getThanks, handleCartToCheckout, placeOrder, removeTicketFromCart, updateQuantity } from "../controllers/cart.controller.js";
 import { getDashboard } from "../controllers/dashboard.controller.js";
 import { getTicketTypesByEvent, postCreateTicketTypeById, putUpdateTicketTypeById, deleteTicketTypeById, putUpdateTicketSoldById } from "../controllers/ticket.controller.js";
-import { isAdmin, isLogin } from "../middlewares/auth.js";
+import { isAdmin, isLogin, isOwnerOrAdmin } from "../middlewares/auth.js";
 import { userUploadMiddleware } from "../middlewares/userUpload.js";
 import { eventUploadMiddleware } from "../middlewares/eventUpload.js";
 
@@ -18,12 +18,12 @@ export const apiRoutes = (app) => {
     authRouter.post("/logout", userLogout);
 
     const userRouter = express.Router();
-    userRouter.get("/", getAllUsers);
-    userRouter.get("/roles", getAllRoles);
-    userRouter.get("/:id", getUserById);
-    userRouter.post("/", userUploadMiddleware("avatar", "user"), postCreateUser);
-    userRouter.put("/:id", userUploadMiddleware("avatar", "user"), putUpdateUser);
-    userRouter.delete("/:id", deleteUser);
+    userRouter.get("/", isAdmin, getAllUsers);
+    userRouter.get("/roles", isAdmin, getAllRoles);
+    userRouter.get("/:id", isOwnerOrAdmin, getUserById);
+    userRouter.post("/", isAdmin, userUploadMiddleware("avatar", "user"), postCreateUser);
+    userRouter.put("/:id", isOwnerOrAdmin, userUploadMiddleware("avatar", "user"), putUpdateUser);
+    userRouter.delete("/:id", isAdmin, deleteUser);
 
     const eventRouter = express.Router();
     // eventRouter.get("/", getAllEvents);
@@ -60,7 +60,7 @@ export const apiRoutes = (app) => {
     dashboardRouter.get("/count", getDashboard);
 
     app.use("/api/auth", authRouter);
-    app.use("/api/users", isAdmin, userRouter);
+    app.use("/api/users", userRouter);
     app.use("/api/events", eventRouter);
     app.use("/api/tickets", ticketRouter);
     app.use("/api/carts", isLogin, cartRouter);
