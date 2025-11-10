@@ -12,7 +12,6 @@ import { PrismaSessionStore } from "@quixo3/prisma-session-store";
 import { PrismaClient } from "@prisma/client";
 import passport from "passport";
 import { configPassportLocal } from "./src/middlewares/passport.local.js";
-import { configPassportGoogle } from "./src/middlewares/passport.google.js";
 // import { initDatabase } from "./src/config/seed.js";
 import { vnpayCallback } from "./src/controllers/cart.controller.js";
 
@@ -56,7 +55,6 @@ app.use(passport.initialize());
 app.use(passport.authenticate('session'));
 
 configPassportLocal();
-configPassportGoogle();
 
 // VNPAY callback route - không cần authentication (VNPAY gọi từ bên ngoài)
 app.get("/api/carts/vnpay-callback", vnpayCallback);
