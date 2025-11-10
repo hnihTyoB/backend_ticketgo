@@ -41,6 +41,7 @@
     "sharp": "^0.34.4",
     "tailwindcss": "^4.1.13",
     "uuid": "^13.0.0",
+    "vnpay": "^2.4.4",
     "zod": "^4.1.11"
   },
   "devDependencies": {

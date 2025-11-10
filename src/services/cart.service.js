@@ -205,10 +205,10 @@ export const handlePlaceOrder = async (
     receiverPhone,
     receiverEmail,
     totalPrice,
-    paymentMethod = "VNPAY"
+    paymentMethod
 ) => {
     try {
-        await prisma.$transaction(async (tx) => {
+        const order = await prisma.$transaction(async (tx) => {
             const cart = await tx.ticketCart.findUnique({
                 where: { userId: Number(userId) },
                 include: {
@@ -254,14 +254,15 @@ export const handlePlaceOrder = async (
                 }
             }
 
-            await tx.ticketOrder.create({
+            // Tạo order tạm thời (chưa trừ vé, chưa xóa cart) - chờ thanh toán thành công
+            const order = await tx.ticketOrder.create({
                 data: {
                     totalPrice: Number(totalPrice),
                     receiverName,
                     receiverPhone,
                     receiverEmail,
                     status: "PENDING",
-                    paymentMethod,
+                    paymentMethod: paymentMethod,
                     paymentStatus: "PAYMENT_UNPAID",
                     userId: Number(userId),
                     ticketOrderDetails: {
@@ -274,25 +275,112 @@ export const handlePlaceOrder = async (
                 },
             });
 
+            return order;
+        });
+
+        return { orderId: order.id, error: null };
+    } catch (error) {
+        console.error("HandlePlaceOrder error:", error);
+        return { orderId: null, error: error.message };
+    }
+};
+
+export const completePayment = async (orderId, transactionRef) => {
+    try {
+        await prisma.$transaction(async (tx) => {
+            const order = await tx.ticketOrder.findUnique({
+                where: { id: Number(orderId) },
+                include: {
+                    ticketOrderDetails: {
+                        include: {
+                            ticketType: true
+                        }
+                    },
+                    user: {
+                        include: {
+                            TicketCart: {
+                                include: {
+                                    ticketCartDetails: true
+                                }
+                            }
+                        }
+                    }
+                },
+            });
+
+            if (!order) {
+                throw new Error("Không tìm thấy đơn hàng.");
+            }
+
+            // Kiểm tra đơn hàng đã thanh toán chưa
+            if (order.paymentStatus === "PAYMENT_SUCCESS") {
+                console.log(`Order ${orderId} đã được thanh toán trước đó.`);
+                return;
+            }
+
+            // Validate lại số lượng vé còn đủ không
+            for (const detail of order.ticketOrderDetails) {
+                const ticketType = detail.ticketType;
+                const availableQuantity = ticketType.quantity - (ticketType.sold || 0);
+
+                if (availableQuantity < detail.quantity) {
+                    throw new Error(`Loại vé "${ticketType.type}" không đủ số lượng! Chỉ còn ${availableQuantity} vé.`);
+                }
+            }
+
             // Cập nhật số lượng và số lượng đã bán cho từng loại vé
-            for (const item of cart.ticketCartDetails) {
+            for (const detail of order.ticketOrderDetails) {
                 await tx.ticketType.update({
-                    where: { id: item.ticketTypeId },
+                    where: { id: detail.ticketTypeId },
                     data: {
-                        quantity: { decrement: item.quantity },
-                        sold: { increment: item.quantity },
+                        quantity: { decrement: detail.quantity },
+                        sold: { increment: detail.quantity },
                     },
                 });
             }
 
-            await tx.ticketCartDetail.deleteMany({ where: { cartId: cart.id } });
-            await tx.ticketCart.delete({ where: { id: cart.id } });
+            // Cập nhật order: thanh toán thành công
+            await tx.ticketOrder.update({
+                where: { id: Number(orderId) },
+                data: {
+                    status: "COMPLETED",
+                    paymentStatus: "PAYMENT_SUCCESS",
+                    paymentRef: transactionRef || null,
+                },
+            });
+
+            // Xóa cart và cart details
+            if (order.user.TicketCart) {
+                await tx.ticketCartDetail.deleteMany({
+                    where: { cartId: order.user.TicketCart.id }
+                });
+                await tx.ticketCart.delete({
+                    where: { id: order.user.TicketCart.id }
+                });
+            }
         });
 
-        return "";
+        return { success: true, error: null };
     } catch (error) {
-        console.error("HandlePlaceOrder error:", error);
-        return error.message;
+        console.error("CompletePayment error:", error);
+        return { success: false, error: error.message };
+    }
+};
+
+export const handlePaymentFailure = async (orderId) => {
+    try {
+        await prisma.ticketOrder.update({
+            where: { id: Number(orderId) },
+            data: {
+                paymentStatus: "PAYMENT_FAILED",
+                status: "CANCELLED",
+            },
+        });
+
+        return { success: true, error: null };
+    } catch (error) {
+        console.error("HandlePaymentFailure error:", error);
+        return { success: false, error: error.message };
     }
 };
 
