@@ -25,10 +25,10 @@ export const handleUserLogin = async (identifier, password) => {
         include: { role: true }
     });
 
-    if (!user) throw new Error(`User ${identifier} does not exist`);
+    if (!user) throw new Error(`Tài khoản không tồn tại`);
 
     const isMatch = await comparePassword(password, user.password);
-    if (!isMatch) throw new Error("Incorrect password");
+    if (!isMatch) throw new Error("Mật khẩu không đúng");
 
     const payload = {
         id: user.id,

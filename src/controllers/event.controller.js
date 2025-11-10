@@ -40,8 +40,8 @@ export const getAllEventsWithFilter = async (req, res) => {
         const limit = Number(req.query.limit) || TOTAL_ITEM_PER_PAGE;
         const search = req.query.search || null;
         const category = req.query.category || null;
-        const week = req.query.week === 'true' || req.query.week === true;
-        const month = req.query.month === 'true' || req.query.month === true;
+        const week = req.query.week === 'true';
+        const month = req.query.month === 'true';
         const sort = req.query.sort || 'asc';
 
         const [events, totalPages] = await Promise.all([

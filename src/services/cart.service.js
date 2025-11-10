@@ -59,8 +59,12 @@ export const addToCart = async (ticketTypeId, quantity, userId) => {
     }
 };
 
-export const ticketTypeInCart = async (userId) => {
-    const cart = await prisma.ticketCart.findUnique({
+export const ticketTypeInCart = async (userId, page, limit) => {
+    const skip = (page - 1) * limit;
+
+    const cart = await prisma.ticketCart.findMany({
+        skip: skip,
+        take: limit,
         where: { userId: Number(userId) },
         include: {
             ticketCartDetails: {
@@ -73,30 +77,38 @@ export const ticketTypeInCart = async (userId) => {
         },
     });
 
-    if (!cart || !cart.ticketCartDetails.length) {
+    if (!cart.length) {
         return [];
     }
 
     // Kiểm tra và cập nhật giá nếu có thay đổi
     const updatedDetails = await Promise.all(
-        cart.ticketCartDetails.map(async (detail) => {
+        cart.map(async (item) => {
             const currentTicketType = await prisma.ticketType.findUnique({
-                where: { id: detail.ticketTypeId },
+                where: { id: item.ticketTypeId },
             });
 
             // Nếu giá thay đổi, cập nhật lại
-            if (currentTicketType && currentTicketType.price !== detail.price) {
+            if (currentTicketType && currentTicketType.price !== item.price) {
                 await prisma.ticketCartDetail.update({
-                    where: { id: detail.id },
+                    where: { id: item.id },
                     data: { price: currentTicketType.price },
                 });
-                return { ...detail, price: currentTicketType.price };
+                return { ...item, price: currentTicketType.price };
             }
-            return detail;
+            return item;
         })
     );
 
     return updatedDetails;
+};
+
+export const countTotalCartPages = async (userId, limit) => {
+    const totalItems = await prisma.ticketCart.count({
+        where: { userId: Number(userId) },
+    });
+    const totalPages = Math.ceil(totalItems / limit);
+    return totalPages;
 };
 
 export const removeFromCart = async (cartDetailId, userId) => {
@@ -193,10 +205,10 @@ export const handlePlaceOrder = async (
     receiverPhone,
     receiverEmail,
     totalPrice,
-    paymentMethod = "VNPAY"
+    paymentMethod
 ) => {
     try {
-        await prisma.$transaction(async (tx) => {
+        const order = await prisma.$transaction(async (tx) => {
             const cart = await tx.ticketCart.findUnique({
                 where: { userId: Number(userId) },
                 include: {
@@ -242,14 +254,15 @@ export const handlePlaceOrder = async (
                 }
             }
 
-            await tx.ticketOrder.create({
+            // Tạo order tạm thời (chưa trừ vé, chưa xóa cart) - chờ thanh toán thành công
+            const order = await tx.ticketOrder.create({
                 data: {
                     totalPrice: Number(totalPrice),
                     receiverName,
                     receiverPhone,
                     receiverEmail,
                     status: "PENDING",
-                    paymentMethod,
+                    paymentMethod: paymentMethod,
                     paymentStatus: "PAYMENT_UNPAID",
                     userId: Number(userId),
                     ticketOrderDetails: {
@@ -262,50 +275,113 @@ export const handlePlaceOrder = async (
                 },
             });
 
+            return order;
+        });
+
+        return { orderId: order.id, error: null };
+    } catch (error) {
+        console.error("HandlePlaceOrder error:", error);
+        return { orderId: null, error: error.message };
+    }
+};
+
+export const completePayment = async (orderId, transactionRef) => {
+    try {
+        await prisma.$transaction(async (tx) => {
+            const order = await tx.ticketOrder.findUnique({
+                where: { id: Number(orderId) },
+                include: {
+                    ticketOrderDetails: {
+                        include: {
+                            ticketType: true
+                        }
+                    },
+                    user: {
+                        include: {
+                            TicketCart: {
+                                include: {
+                                    ticketCartDetails: true
+                                }
+                            }
+                        }
+                    }
+                },
+            });
+
+            if (!order) {
+                throw new Error("Không tìm thấy đơn hàng.");
+            }
+
+            // Kiểm tra đơn hàng đã thanh toán chưa
+            if (order.paymentStatus === "PAYMENT_SUCCESS") {
+                console.log(`Order ${orderId} đã được thanh toán trước đó.`);
+                return;
+            }
+
+            // Validate lại số lượng vé còn đủ không
+            for (const detail of order.ticketOrderDetails) {
+                const ticketType = detail.ticketType;
+                const availableQuantity = ticketType.quantity - (ticketType.sold || 0);
+
+                if (availableQuantity < detail.quantity) {
+                    throw new Error(`Loại vé "${ticketType.type}" không đủ số lượng! Chỉ còn ${availableQuantity} vé.`);
+                }
+            }
+
             // Cập nhật số lượng và số lượng đã bán cho từng loại vé
-            for (const item of cart.ticketCartDetails) {
+            for (const detail of order.ticketOrderDetails) {
                 await tx.ticketType.update({
-                    where: { id: item.ticketTypeId },
+                    where: { id: detail.ticketTypeId },
                     data: {
-                        quantity: { decrement: item.quantity },
-                        sold: { increment: item.quantity },
+                        quantity: { decrement: detail.quantity },
+                        sold: { increment: detail.quantity },
                     },
                 });
             }
 
-            await tx.ticketCartDetail.deleteMany({ where: { cartId: cart.id } });
-            await tx.ticketCart.delete({ where: { id: cart.id } });
+            // Cập nhật order: thanh toán thành công
+            await tx.ticketOrder.update({
+                where: { id: Number(orderId) },
+                data: {
+                    status: "COMPLETED",
+                    paymentStatus: "PAYMENT_SUCCESS",
+                    paymentRef: transactionRef || null,
+                },
+            });
+
+            // Xóa cart và cart details
+            if (order.user.TicketCart) {
+                await tx.ticketCartDetail.deleteMany({
+                    where: { cartId: order.user.TicketCart.id }
+                });
+                await tx.ticketCart.delete({
+                    where: { id: order.user.TicketCart.id }
+                });
+            }
         });
 
-        return "";
+        return { success: true, error: null };
     } catch (error) {
-        console.error("HandlePlaceOrder error:", error);
-        return error.message;
+        console.error("CompletePayment error:", error);
+        return { success: false, error: error.message };
     }
 };
 
-export const countTotalOrderPages = async (limit) => {
-    const totalItems = await prisma.ticketOrder.count();
-    return Math.ceil(totalItems / limit);
-}
-
-export const orderHistory = async (userId, page, limit) => {
-    const skip = (page - 1) * limit;
-
-    const orders = await prisma.ticketOrder.findMany({
-        where: { userId: Number(userId) },
-        include: {
-            ticketOrderDetails: {
-                include: {
-                    ticketType: { include: { event: true } },
-                },
+export const handlePaymentFailure = async (orderId) => {
+    try {
+        await prisma.ticketOrder.update({
+            where: { id: Number(orderId) },
+            data: {
+                paymentStatus: "PAYMENT_FAILED",
+                status: "CANCELLED",
             },
-        },
-        orderBy: { createdAt: "desc" },
-        skip,
-        take: limit,
-    });
-    return orders;
+        });
+
+        return { success: true, error: null };
+    } catch (error) {
+        console.error("HandlePaymentFailure error:", error);
+        return { success: false, error: error.message };
+    }
 };
 
 export const calculateCartTotal = (cartDetails) => {

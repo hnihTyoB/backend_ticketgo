@@ -1,9 +1,11 @@
 import { TOTAL_ITEM_PER_PAGE } from "../config/constant.js";
 import {
-    countTotalOrderPages,
+    countAllOrderPages,
     findAllOrders,
     findOrderById,
-    updateStatus
+    findOrderHistoryByUser,
+    updateStatus,
+    countTotalOrderHistoryPages
 } from "../services/order.service.js";
 
 export const getAllOrders = async (req, res) => {
@@ -12,7 +14,7 @@ export const getAllOrders = async (req, res) => {
 
     try {
         const orders = await findAllOrders(page, limit);
-        const totalPages = await countTotalOrderPages(limit);
+        const totalPages = await countAllOrderPages(limit);
 
         return res.status(200).json({
             success: true,
@@ -54,6 +56,33 @@ export const getOrderById = async (req, res) => {
     }
 };
 
+export const getOrderHistory = async (req, res) => {
+    const user = req.user;
+
+    if (!user) {
+        return res.status(401).json({
+            success: false,
+            message: "Bạn chưa đăng nhập",
+        });
+    }
+
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || TOTAL_ITEM_PER_PAGE;
+
+        const status = req.query.status || "COMPLETED";
+        const eventTime = req.query.eventTime || "UPCOMING";
+        const [orders, totalPages] = await Promise.all([
+            findOrderHistoryByUser(user.id, page, limit, status, eventTime),
+            countTotalOrderHistoryPages(user.id, limit, status, eventTime),
+        ]);
+        return res.status(200).json({ success: true, orders, totalPages });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ success: false, message: "Lỗi server khi lấy vé đã mua", error: err.message });
+    }
+};
+
 export const putUpdateStatus = async (req, res) => {
     const orderId = parseInt(req.params.id);
     const { status } = req.body;
@@ -73,7 +102,7 @@ export const putUpdateStatus = async (req, res) => {
         console.error(err);
         return res.status(500).json({
             success: false,
-            message: "Lỗi server khi cập nhật trạng thái đơn hàng",
+            message: "Lỗi server khi cập nhật trạng thái vé đã mua",
             error: err.message,
         });
     }
