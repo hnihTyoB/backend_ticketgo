@@ -5,11 +5,14 @@ import {
     removeFromCart,
     prepareCartBeforeCheckout,
     handlePlaceOrder,
-    orderHistory,
     ticketTypeInCart,
     calculateCartTotal,
-    countTotalOrderPages
+    countTotalCartPages,
+    completePayment,
+    handlePaymentFailure
 } from "../services/cart.service.js";
+import { createPaymentUrl, verifyReturnUrl } from "../services/vnpay.service.js";
+import process from "process";
 import {
     addToCartSchema,
     updateQuantitySchema,
@@ -67,15 +70,47 @@ export const getCart = async (req, res) => {
     }
 
     try {
-        const cartDetails = await ticketTypeInCart(user.id);
-        const totalPrice = calculateCartTotal(cartDetails);
-        const cartId = cartDetails.length ? cartDetails[0].cartId : null;
+        const page = Number(req.query.page) || 1;
+        const limit = Number(req.query.limit) || TOTAL_ITEM_PER_PAGE;
+        const [cartDetails, totalPages] = await Promise.all([
+            ticketTypeInCart(user.id, page, limit),
+            countTotalCartPages(user.id, limit),
+        ]);
 
         return res.status(200).json({
             success: true,
             cartDetails,
-            totalPrice,
-            cartId
+            totalPages,
+        });
+    } catch (error) {
+        console.error("GetCart error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Lỗi khi lấy giỏ hàng"
+        });
+    }
+};
+
+export const getCartWithFilter = async (req, res) => {
+    const user = req.user;
+
+    if (!user) {
+        return res.status(401).json({
+            success: false,
+            message: "Bạn chưa đăng nhập",
+            // redirect: "/login",
+        });
+    }
+
+    try {
+        const page = Number(req.query.page) || 1;
+        const limit = Number(req.query.limit) || TOTAL_ITEM_PER_PAGE;
+
+        const cartDetails = await ticketTypeInCart(user.id, page, limit);
+
+        return res.status(200).json({
+            success: true,
+            cartDetails,
         });
     } catch (error) {
         console.error("GetCart error:", error);
@@ -235,31 +270,47 @@ export const placeOrder = async (req, res) => {
             receiverPhone: req.body.receiverPhone,
             receiverEmail: req.body.receiverEmail || req.body.receiverAddress || null,
             totalPrice: Number(req.body.totalPrice) || 0,
+            paymentMethod: req.body.paymentMethod || "VNPAY",
         });
 
         // Lấy giỏ hàng và tính lại totalPrice từ backend (không tin client)
         const cartDetails = await ticketTypeInCart(user.id);
         const calculatedTotalPrice = calculateCartTotal(cartDetails);
 
-        const message = await handlePlaceOrder(
+        // Tạo order tạm thời
+        const { orderId, error } = await handlePlaceOrder(
             user.id,
             validatedData.receiverName,
             validatedData.receiverPhone,
             validatedData.receiverEmail,
-            calculatedTotalPrice // Dùng giá tính từ backend, không dùng từ client
+            calculatedTotalPrice, // Dùng giá tính từ backend, không dùng từ client
+            validatedData.paymentMethod,
         );
 
-        if (message) {
+        if (error) {
             return res.status(400).json({
                 success: false,
-                message
+                message: error
             });
         }
 
+        const clientIp = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || "127.0.0.1";
+        const backendUrl = `http://localhost:${process.env.PORT || 3000}`;
+        const returnUrl = `${backendUrl}/api/carts/vnpay-callback`;
+
+        const paymentUrl = createPaymentUrl({
+            amount: calculatedTotalPrice,
+            orderId: orderId,
+            orderInfo: `Thanh toán đơn hàng #${orderId}`,
+            ipAddr: clientIp,
+            returnUrl: returnUrl,
+        });
+
         return res.status(200).json({
             success: true,
-            message: "Đặt vé thành công",
-            redirect: "/thanks",
+            message: "Tạo đơn hàng thành công. Vui lòng thanh toán.",
+            paymentUrl: paymentUrl,
+            orderId: orderId,
         });
     } catch (error) {
         console.error("PlaceOrder error:", error);
@@ -297,38 +348,49 @@ export const getThanks = async (req, res) => {
     return res.status(200).json({
         success: true,
         message: "Đặt vé thành công",
+        redirect: "/thanks",
     });
 };
 
-export const getOrderHistory = async (req, res) => {
-    const user = req.user;
-
-    if (!user) {
-        return res.status(401).json({
-            success: false,
-            message: "Bạn chưa đăng nhập",
-            // redirect: "/login"
-        });
-    }
-
+export const vnpayCallback = async (req, res) => {
     try {
-        const page = Number(req.query.page) || 1;
-        const limit = Number(req.query.limit) || TOTAL_ITEM_PER_PAGE;
+        const verifyResult = verifyReturnUrl(req.query);
 
-        const [orders, totalPages] = await Promise.all([
-            orderHistory(user.id, page, limit),
-            countTotalOrderPages(limit),
-        ]);
+        if (!verifyResult.isVerified) {
+            console.error("VNPAY callback verification failed:", verifyResult);
+            const frontendUrl = `http://localhost:${process.env.FRONTEND_PORT || 8888}`;
+            return res.redirect(`${frontendUrl}/checkout?error=verification_failed`);
+        }
 
-        res.status(200).json({
-            orders,
-            totalPages,
-        });
-    } catch (err) {
-        console.error("Lỗi khi lấy danh sách đơn hàng:", err);
-        res.status(500).json({
-            message: "Lỗi server",
-            error: err.message
-        });
+        const orderId = verifyResult.transactionRef ? Number(verifyResult.transactionRef) : null;
+        const frontendUrl = `http://localhost:${process.env.FRONTEND_PORT || 8888}`;
+
+        if (!orderId) {
+            console.error("Cannot get orderId from VNPAY callback");
+            return res.redirect(`${frontendUrl}/checkout?error=invalid_order`);
+        }
+
+        if (verifyResult.isSuccess) {
+            console.log(`Payment success for order ${orderId}`);
+
+            const { success, error } = await completePayment(orderId, verifyResult.transactionRef);
+
+            if (success) {
+                return res.redirect(`${frontendUrl}/thanks?orderId=${orderId}`);
+            } else {
+                console.error(`Complete payment failed for order ${orderId}:`, error);
+                return res.redirect(`${frontendUrl}/checkout?error=payment_processing_failed&orderId=${orderId}`);
+            }
+        } else {
+            console.log(`Payment failed for order ${orderId}:`, verifyResult.message);
+
+            await handlePaymentFailure(orderId);
+
+            return res.redirect(`${frontendUrl}/checkout?error=payment_failed&orderId=${orderId}`);
+        }
+    } catch (error) {
+        console.error("VNPAY callback error:", error);
+        const frontendUrl = `http://localhost:${process.env.FRONTEND_PORT || 8888}`;
+        return res.redirect(`${frontendUrl}/checkout?error=callback_error`);
     }
 };

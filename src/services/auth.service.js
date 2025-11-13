@@ -25,10 +25,10 @@ export const handleUserLogin = async (identifier, password) => {
         include: { role: true }
     });
 
-    if (!user) throw new Error(`User ${identifier} does not exist`);
+    if (!user) throw new Error(`Tài khoản không tồn tại`);
 
     const isMatch = await comparePassword(password, user.password);
-    if (!isMatch) throw new Error("Incorrect password");
+    if (!isMatch) throw new Error("Mật khẩu không đúng");
 
     const payload = {
         id: user.id,
@@ -66,9 +66,12 @@ export const registerUser = async ({ email, password, roleName = "USER" }) => {
     const role = await prisma.role.findUnique({ where: { name: roleName } });
     if (!role) throw new Error("Default user role not found");
 
+    const fullName = email.split("@")[0];
+
     const newUser = await prisma.user.create({
         data: {
             email,
+            fullName,
             password: newPassword,
             accountType: ACCOUNT_TYPE.SYSTEM,
             roleId: role.id,

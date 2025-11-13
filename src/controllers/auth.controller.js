@@ -39,7 +39,7 @@ export const userRegister = async (req, res) => {
         }
 
         const { email, password } = validation.data;
-        const newUser = await registerUser(email, password);
+        const newUser = await registerUser({ email, password });
 
         res.status(201).json({
             message: "Đăng ký user thành công",

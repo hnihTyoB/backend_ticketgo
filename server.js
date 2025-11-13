@@ -13,6 +13,7 @@ import { PrismaClient } from "@prisma/client";
 import passport from "passport";
 import { configPassportLocal } from "./src/middlewares/passport.local.js";
 // import { initDatabase } from "./src/config/seed.js";
+import { vnpayCallback } from "./src/controllers/cart.controller.js";
 
 dotenv.config();
 
@@ -20,6 +21,7 @@ const app = express();
 
 app.use(cors({
     origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:8888'],
+    credentials: true,
 }));
 
 const __filename = fileURLToPath(import.meta.url);
@@ -54,11 +56,13 @@ app.use(passport.authenticate('session'));
 
 configPassportLocal();
 
+// VNPAY callback route - không cần authentication (VNPAY gọi từ bên ngoài)
+app.get("/api/carts/vnpay-callback", vnpayCallback);
+
 app.use("/api", checkValidJWT);
 
 apiRoutes(app);
 
-// initDatabase();
 
 const PORT = process.env.PORT;
 app.listen(PORT, () => {

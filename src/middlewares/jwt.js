@@ -5,6 +5,8 @@ export const checkValidJWT = (req, res, next) => {
     const whitelist = [
         "/auth/login",
         "/auth/register",
+        "/auth/google",
+        "/auth/google/callback",
     ];
 
     const publicGetPaths = ["/events"];
