@@ -131,6 +131,27 @@ export const removeFromCart = async (cartDetailId, userId) => {
     });
 };
 
+export const clearCart = async (userId) => {
+    const cart = await prisma.ticketCart.findUnique({
+        where: { userId: Number(userId) },
+        include: { ticketCartDetails: true }
+    });
+
+    if (!cart) {
+        throw new Error("Giỏ hàng không tồn tại.");
+    }
+
+    await prisma.$transaction(async (tx) => {
+        await tx.ticketCartDetail.deleteMany({
+            where: { cartId: cart.id }
+        });
+
+        await tx.ticketCart.delete({
+            where: { id: cart.id }
+        });
+    });
+};
+
 export const updateCartItemQuantity = async (cartDetailId, newQuantity, userId) => {
     const cartDetail = await prisma.ticketCartDetail.findFirst({
         where: {

@@ -8,6 +8,7 @@ import {
     removeUser,
     findAllRoles,
 } from "../services/user.service.js";
+import { generateTokenForUser } from "../services/auth.service.js";
 import fs from "fs";
 import { createSchema, updateSchema } from "../validation/user.schema.js";
 
@@ -121,7 +122,14 @@ export const putUpdateUser = async (req, res) => {
 
         const updatedUser = await updateUser(req.params.id, updateData);
 
-        res.json({ message: "Cập nhật người dùng thành công", user: updatedUser });
+        // Generate new token with updated user info
+        const newToken = await generateTokenForUser(req.params.id);
+
+        res.json({
+            message: "Cập nhật người dùng thành công",
+            user: updatedUser,
+            token: newToken
+        });
     } catch (err) {
         console.error("Update user error:", err);
         res.status(500).json({ message: "Lỗi server", error: err.message });
