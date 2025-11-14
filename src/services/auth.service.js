@@ -101,3 +101,27 @@ export const countUserSumCart = async (userId) => {
 
     return sum._sum.quantity || 0;
 };
+
+export const generateTokenForUser = async (userId) => {
+    const user = await findUserWithRoleById(userId);
+    if (!user) throw new Error("User not found");
+
+    const payload = {
+        id: user.id,
+        fullName: user.fullName,
+        phone: user.phone,
+        email: user.email,
+        birthDate: user.birthDate,
+        gender: user.gender,
+        avatar: user.avatar,
+        accountType: user.accountType,
+        role: user.role,
+    };
+
+    const secret = process.env.JWT_SECRET;
+    if (!secret) throw new Error("JWT_SECRET is not defined in the .env file");
+
+    const expiresIn = process.env.JWT_EXPIRES_IN || "7d";
+
+    return jwt.sign(payload, secret, { expiresIn });
+};
