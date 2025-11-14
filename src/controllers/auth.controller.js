@@ -63,11 +63,22 @@ export const successRedirect = (req, res) => {
 };
 
 export const userLogout = (req, res) => {
-    req.session.destroy(err => {
-        if (err) {
-            return res.status(500).json({ message: "Logout thất bại", error: err.message });
-        }
+    // Với JWT, không cần xử lý session
+    // Có thể thêm logic blacklist token ở đây nếu cần
+
+    // Nếu có session, xóa nó
+    if (req.session) {
+        req.session.destroy(err => {
+            if (err) {
+                console.error("Session destroy error:", err);
+            }
+        });
         res.clearCookie("connect.sid");
-        res.status(200).json({ message: "Đăng xuất thành công" });
-    });
+    }
+
+    // TODO: Có thể thêm token vào blacklist ở đây
+    // const token = req.headers.authorization?.split(' ')[1];
+    // await addTokenToBlacklist(token);
+
+    res.status(200).json({ success: true, message: "Đăng xuất thành công" });
 };

@@ -9,7 +9,8 @@ import {
     calculateCartTotal,
     countTotalCartPages,
     completePayment,
-    handlePaymentFailure
+    handlePaymentFailure,
+    clearCart
 } from "../services/cart.service.js";
 import { createPaymentUrl, verifyReturnUrl } from "../services/vnpay.service.js";
 import process from "process";
@@ -157,6 +158,27 @@ export const updateQuantity = async (req, res) => {
     }
 }
 
+// export const removeTicketFromCart = async (req, res) => {
+//     const cartDetailId = Number(req.params.id);
+//     const user = req.user;
+
+//     if (!user) {
+//         return res.status(401).json({
+//             success: false,
+//             message: "Bạn chưa đăng nhập",
+//             // redirect: "/login"
+//         });
+//     }
+
+//     try {
+//         await removeFromCart(cartDetailId, user.id);
+//         return res.status(200).json({ success: true, message: "Đã xoá vé khỏi giỏ hàng" });
+//     } catch (error) {
+//         console.error("RemoveTicketFromCart error:", error);
+//         return res.status(500).json({ success: false, message: "Lỗi khi xoá vé khỏi giỏ hàng" });
+//     }
+// };
+
 export const removeTicketFromCart = async (req, res) => {
     const cartDetailId = Number(req.params.id);
     const user = req.user;
@@ -221,6 +243,25 @@ export const handleCartToCheckout = async (req, res) => {
     } catch (error) {
         console.error("HandleCartToCheckout error:", error);
         return res.status(500).json({ success: false, message: "Lỗi khi chuyển sang trang thanh toán" });
+    }
+};
+
+export const clearCartHandler = async (req, res) => {
+    const user = req.user;
+
+    if (!user) {
+        return res.status(401).json({
+            success: false,
+            message: "Bạn chưa đăng nhập",
+        });
+    }
+
+    try {
+        await clearCart(user.id);
+        return res.status(200).json({ success: true, message: "Đã xóa toàn bộ giỏ hàng" });
+    } catch (error) {
+        console.error("ClearCart error:", error);
+        return res.status(500).json({ success: false, message: error.message || "Lỗi khi xóa giỏ hàng" });
     }
 };
 
