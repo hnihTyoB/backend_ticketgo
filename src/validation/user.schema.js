@@ -36,7 +36,8 @@ const phoneSchema = z
 
 export const loginSchema = z
     .object({
-        username: z.string().trim().min(1, { message: "Tên đăng nhập không được để trống" }),
+        // username: emailSchema.or(phoneSchema),
+        username: z.string().trim().min(1, { message: "Vui lòng nhập email hoặc số điện thoại" }),
         password: z
             .string()
             .trim()

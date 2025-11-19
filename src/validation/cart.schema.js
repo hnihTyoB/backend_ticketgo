@@ -81,12 +81,4 @@ export const placeOrderSchema = z.object({
         })
         .optional()
         .nullable(),
-    totalPrice: z
-        .number()
-        .optional()
-        .default(0),
-    paymentMethod: z
-        .string()
-        .optional()
-        .default("VNPAY"),
 });

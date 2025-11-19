@@ -62,28 +62,32 @@ export const addToCart = async (ticketTypeId, quantity, userId) => {
 export const ticketTypeInCart = async (userId, page, limit) => {
     const skip = (page - 1) * limit;
 
-    const cart = await prisma.ticketCart.findMany({
-        skip: skip,
-        take: limit,
+    // Find the user's cart first
+    const cart = await prisma.ticketCart.findUnique({
         where: { userId: Number(userId) },
+    });
+
+    if (!cart) {
+        return [];
+    }
+
+    // Fetch cart details (apply pagination on details)
+    const details = await prisma.ticketCartDetail.findMany({
+        where: { cartId: cart.id },
+        // skip,
+        // take: limit,
         include: {
-            ticketCartDetails: {
-                include: {
-                    ticketType: {
-                        include: { event: true },
-                    },
-                },
+            ticketType: {
+                include: { event: true },
             },
         },
     });
 
-    if (!cart.length) {
-        return [];
-    }
+    if (!details.length) return [];
 
     // Kiểm tra và cập nhật giá nếu có thay đổi
     const updatedDetails = await Promise.all(
-        cart.map(async (item) => {
+        details.map(async (item) => {
             const currentTicketType = await prisma.ticketType.findUnique({
                 where: { id: item.ticketTypeId },
             });
@@ -94,7 +98,8 @@ export const ticketTypeInCart = async (userId, page, limit) => {
                     where: { id: item.id },
                     data: { price: currentTicketType.price },
                 });
-                return { ...item, price: currentTicketType.price };
+                // return updated shape so frontend sees new price
+                return { ...item, price: currentTicketType.price, ticketType: { ...item.ticketType, price: currentTicketType.price } };
             }
             return item;
         })
@@ -104,9 +109,16 @@ export const ticketTypeInCart = async (userId, page, limit) => {
 };
 
 export const countTotalCartPages = async (userId, limit) => {
-    const totalItems = await prisma.ticketCart.count({
+    const cart = await prisma.ticketCart.findUnique({
         where: { userId: Number(userId) },
     });
+
+    if (!cart) return 0;
+
+    const totalItems = await prisma.ticketCartDetail.count({
+        where: { cartId: cart.id },
+    });
+
     const totalPages = Math.ceil(totalItems / limit);
     return totalPages;
 };

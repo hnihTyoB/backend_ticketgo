@@ -78,8 +78,11 @@ export const getCart = async (req, res) => {
             countTotalCartPages(user.id, limit),
         ]);
 
+        const cartId = cartDetails.length > 0 ? cartDetails[0].cartId : null;
+
         return res.status(200).json({
             success: true,
+            cartId,
             cartDetails,
             totalPages,
         });
