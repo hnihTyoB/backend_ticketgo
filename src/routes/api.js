@@ -3,7 +3,7 @@ import { postCreateUser, getAllUsers, getUserById, putUpdateUser, deleteUser, ge
 import { deleteEvent, getAllEventsWithFilter, getEventById, postCreateEvent, putUpdateEvent } from "../controllers/event.controller.js";
 import { getAllOrders, getOrderById, getOrderHistory, putUpdateStatus } from "../controllers/order.controller.js";
 import { successRedirect, userLogin, userLogout, userRegister } from "../controllers/auth.controller.js";
-import { addTicketToCart, checkOut, getCart, getThanks, handleCartToCheckout, placeOrder, removeTicketFromCart, updateQuantity } from "../controllers/cart.controller.js";
+import { addTicketToCart, checkOut, getCart, getThanks, handleCartToCheckout, placeOrder, removeTicketFromCart, updateQuantity, clearCartHandler } from "../controllers/cart.controller.js";
 import { getDashboard } from "../controllers/dashboard.controller.js";
 import { getTicketTypesByEvent, postCreateTicketTypeById, putUpdateTicketTypeById, deleteTicketTypeById, putUpdateTicketSoldById } from "../controllers/ticket.controller.js";
 import { isAdmin, isLogin, isOwnerOrAdmin } from "../middlewares/auth.js";
@@ -44,7 +44,8 @@ export const apiRoutes = (app) => {
     cartRouter.get("/", getCart);
     cartRouter.post("/", addTicketToCart);
     cartRouter.put("/", updateQuantity);
-    cartRouter.delete("/", removeTicketFromCart);
+    // cartRouter.delete("/:id", removeTicketFromCart);
+    cartRouter.delete("/", clearCartHandler);
     cartRouter.post("/prepare-checkout", handleCartToCheckout);
     cartRouter.get("/checkout", checkOut);
     cartRouter.post("/place-order", placeOrder);
