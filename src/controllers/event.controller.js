@@ -42,7 +42,7 @@ export const getAllEventsWithFilter = async (req, res) => {
         const category = req.query.category || null;
         const week = req.query.week === 'true';
         const month = req.query.month === 'true';
-        const sort = req.query.sort || 'asc';
+        const sort = req.query.sort || 'desc';
 
         const [events, totalPages] = await Promise.all([
             findAllEventsWithFilter(page, limit, search, category, week, month, sort),
