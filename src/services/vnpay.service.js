@@ -26,7 +26,7 @@ export const createPaymentUrl = (params) => {
     const { amount, orderId, orderInfo, ipAddr, returnUrl } = params;
 
     const paymentUrl = vnpay.buildPaymentUrl({
-        vnp_Amount: amount * 100, // VNPAY yêu cầu số tiền nhân 100
+        vnp_Amount: amount,
         vnp_Command: 'pay',
         vnp_CreateDate: new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + '00', // Format: yyyyMMddHHmmss
         vnp_CurrCode: 'VND',
