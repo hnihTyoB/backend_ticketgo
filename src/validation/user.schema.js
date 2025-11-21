@@ -7,6 +7,7 @@ const phoneRegex = /^(0|\+84)[1-9][0-9]{8,14}$/;
 const emailSchema = z
     .string()
     .trim()
+    .min(1, { message: "Email không được để trống" })
     .refine((email) => emailRegex.test(email), {
         message: "Email không đúng định dạng",
         path: ["email"]
@@ -36,7 +37,13 @@ const phoneSchema = z
 
 export const loginSchema = z
     .object({
-        username: z.string().trim().min(1, { message: "Tên đăng nhập không được để trống" }),
+        emailOrPhone: z
+            .string()
+            .trim()
+            .min(1, { message: "Email hoặc số điện thoại không được để trống" })
+            .refine((value) => emailRegex.test(value) || phoneRegex.test(value), {
+                message: "Email hoặc số điện thoại không hợp lệ"
+            }),
         password: z
             .string()
             .trim()
@@ -46,18 +53,34 @@ export const loginSchema = z
 
 export const registerSchema = z
     .object({
+        fullName: z.string().trim().min(1, { message: "Họ và tên không được để trống" }),
         email: emailSchema,
+        phone: phoneSchema.optional(),
         password: z
             .string()
             .trim()
             .min(6, { message: "Mật khẩu phải có ít nhất 6 ký tự" })
             .max(20, { message: "Mật khẩu không hợp lệ" }),
+        confirmPassword: z
+            .string()
+            .trim()
+            .min(6, { message: "Mật khẩu phải có ít nhất 6 ký tự" })
+            .max(20, { message: "Mật khẩu không hợp lệ" })
+    })
+    .superRefine((data, ctx) => {
+        if (data.password !== data.confirmPassword) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Mật khẩu không khớp",
+                path: ["confirmPassword"]
+            });
+        }
     })
 
 export const createSchema = z
     .object({
         fullName: z.string().trim().min(1, { message: "Họ và tên không được để trống" }),
-        email: emailSchema.optional(),
+        email: emailSchema,
         phone: phoneSchema.optional(),
         birthDate: z
             .string()
@@ -78,8 +101,7 @@ export const updateSchema = z.object({
     email: z
         .string()
         .trim()
-        .email("Email không đúng định dạng")
-        .optional(),
+        .refine((email) => emailRegex.test(email), { message: "Email không đúng định dạng" }),
     phone: z
         .string()
         .trim()

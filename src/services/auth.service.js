@@ -25,10 +25,10 @@ export const handleUserLogin = async (identifier, password) => {
         include: { role: true }
     });
 
-    if (!user) throw new Error(`Tài khoản không tồn tại`);
+    if (!user) throw new Error(`Tên đăng nhập hoặc mật khẩu không đúng`);
 
     const isMatch = await comparePassword(password, user.password);
-    if (!isMatch) throw new Error("Mật khẩu không đúng");
+    if (!isMatch) throw new Error("Tên đăng nhập hoặc mật khẩu không đúng");
 
     const payload = {
         id: user.id,
@@ -60,7 +60,7 @@ export const isPhoneExist = async (phone) => {
     return !!user;
 };
 
-export const registerUser = async ({ email, password, roleName = "USER" }) => {
+export const registerUser = async (fullName, email, phone, password, roleName = "USER") => {
     const newPassword = await hashPassword(password);
 
     const role = await prisma.role.findUnique({ where: { name: roleName } });
@@ -70,8 +70,9 @@ export const registerUser = async ({ email, password, roleName = "USER" }) => {
 
     const newUser = await prisma.user.create({
         data: {
-            email,
             fullName,
+            email,
+            phone,
             password: newPassword,
             accountType: ACCOUNT_TYPE.SYSTEM,
             roleId: role.id,
