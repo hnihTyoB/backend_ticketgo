@@ -429,3 +429,29 @@ export const vnpayCallback = async (req, res) => {
         return res.redirect(`${frontendUrl}/checkout?error=callback_error`);
     }
 };
+
+export const vnpayNotify = async (req, res) => {
+    try {
+        const query = Object.keys(req.query).length ? req.query : req.body;
+        const verifyResult = verifyReturnUrl(query);
+
+        if (!verifyResult.isVerified) {
+            console.error('VNPAY notify verification failed:', verifyResult);
+            return res.status(400).send('Invalid signature');
+        }
+
+        const orderId = verifyResult.transactionRef ? Number(verifyResult.transactionRef) : null;
+        if (!orderId) return res.status(400).send('Invalid order');
+
+        if (verifyResult.isSuccess) {
+            await completePayment(orderId, verifyResult.transactionRef);
+        } else {
+            await handlePaymentFailure(orderId);
+        }
+
+        return res.status(200).send('OK');
+    } catch (error) {
+        console.error('VNPAY notify error:', error);
+        return res.status(500).send('ERROR');
+    }
+};
