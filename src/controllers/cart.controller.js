@@ -18,7 +18,6 @@ import {
     addToCartSchema,
     updateQuantitySchema,
     prepareCheckoutSchema,
-    placeOrderSchema,
 } from "../validation/cart.schema.js";
 
 
@@ -219,7 +218,7 @@ export const handleCartToCheckout = async (req, res) => {
             currentCartDetails: req.body.currentCartDetails || [],
             receiverName: req.body.receiverName,
             receiverPhone: req.body.receiverPhone,
-            receiverEmail: req.body.receiverEmail || null,
+            receiverEmail: req.body.receiverEmail,
         };
         const validate = await prepareCheckoutSchema.safeParseAsync(orderData);
         if (!validate.success) {
@@ -309,14 +308,6 @@ export const placeOrder = async (req, res) => {
     }
 
     try {
-        const validatedData = placeOrderSchema.parse({
-            receiverName: req.body.receiverName,
-            receiverPhone: req.body.receiverPhone,
-            receiverEmail: req.body.receiverEmail || req.body.receiverAddress || null,
-            totalPrice: Number(req.body.totalPrice) || 0,
-            paymentMethod: req.body.paymentMethod || "VNPAY",
-        });
-
         // Lấy giỏ hàng và tính lại totalPrice từ backend (không tin client)
         const cartDetails = await ticketTypeInCart(user.id);
         const calculatedTotalPrice = calculateCartTotal(cartDetails);
@@ -324,11 +315,11 @@ export const placeOrder = async (req, res) => {
         // Tạo order tạm thời
         const { orderId, error } = await handlePlaceOrder(
             user.id,
-            validatedData.receiverName,
-            validatedData.receiverPhone,
-            validatedData.receiverEmail,
-            calculatedTotalPrice, // Dùng giá tính từ backend, không dùng từ client
-            validatedData.paymentMethod,
+            req.body.receiverName,
+            req.body.receiverPhone,
+            req.body.receiverEmail,
+            calculatedTotalPrice,
+            req.body.paymentMethod,
         );
 
         if (error) {

@@ -7,6 +7,7 @@ const phoneRegex = /^(0|\+84)[1-9][0-9]{8,14}$/;
 const emailSchema = z
     .string()
     .trim()
+    .min(1, { message: "Email không được để trống" })
     .refine((email) => emailRegex.test(email), {
         message: "Email không đúng định dạng",
         path: ["email"]
@@ -100,7 +101,7 @@ export const updateSchema = z.object({
     email: z
         .string()
         .trim()
-        .email("Email không đúng định dạng"),
+        .refine((email) => emailRegex.test(email), { message: "Email không đúng định dạng" }),
     phone: z
         .string()
         .trim()

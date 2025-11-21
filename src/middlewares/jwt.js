@@ -32,6 +32,7 @@ export const checkValidJWT = (req, res, next) => {
         req.user = {
             id: decoded.id,
             fullName: "",
+            email: decoded.email,
             phone: "",
             password: "",
             birthDate: "",

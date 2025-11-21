@@ -59,10 +59,7 @@ export const addToCart = async (ticketTypeId, quantity, userId) => {
     }
 };
 
-export const ticketTypeInCart = async (userId, page, limit) => {
-    const skip = (page - 1) * limit;
-
-    // Find the user's cart first
+export const ticketTypeInCart = async (userId) => {
     const cart = await prisma.ticketCart.findUnique({
         where: { userId: Number(userId) },
     });
@@ -71,11 +68,8 @@ export const ticketTypeInCart = async (userId, page, limit) => {
         return [];
     }
 
-    // Fetch cart details (apply pagination on details)
     const details = await prisma.ticketCartDetail.findMany({
         where: { cartId: cart.id },
-        // skip,
-        // take: limit,
         include: {
             ticketType: {
                 include: { event: true },
@@ -98,7 +92,6 @@ export const ticketTypeInCart = async (userId, page, limit) => {
                     where: { id: item.id },
                     data: { price: currentTicketType.price },
                 });
-                // return updated shape so frontend sees new price
                 return { ...item, price: currentTicketType.price, ticketType: { ...item.ticketType, price: currentTicketType.price } };
             }
             return item;
