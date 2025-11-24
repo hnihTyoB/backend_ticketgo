@@ -58,6 +58,44 @@ export const addTicketToCart = async (req, res) => {
     }
 };
 
+export const addMultipleTicketsToCart = async (req, res) => {
+    const user = req.user;
+
+    if (!user) {
+        return res.status(401).json({
+            success: false,
+            message: "Bạn chưa đăng nhập",
+            // redirect: "/login"
+        });
+    }
+
+    try {
+        const tickets = req.body.tickets; // Expecting an array of { ticketTypeId, quantity }
+        for (const ticket of tickets) {
+            const validate = await addToCartSchema.safeParseAsync({
+                ticketTypeId: Number(ticket.ticketTypeId),
+                quantity: Number(ticket.quantity),
+            });
+            if (!validate.success) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Dữ liệu không hợp lệ",
+                    errors: validate.error.issues.map(err => ({
+                        path: err.path[0],
+                        message: err.message
+                    }))
+                });
+            }
+            const { ticketTypeId, quantity } = validate.data;
+            await addToCart(ticketTypeId, quantity, user.id);
+        }
+        return res.status(200).json({ success: true, message: "Đã thêm vé vào giỏ hàng" });
+    } catch (error) {
+        console.error("AddMultipleTicketsToCart error:", error);
+        return res.status(500).json({ success: false, message: "Lỗi thêm vé vào giỏ hàng" });
+    }
+};
+
 export const getCart = async (req, res) => {
     const user = req.user;
 

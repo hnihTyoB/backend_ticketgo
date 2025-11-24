@@ -435,13 +435,10 @@ export const expirePendingOrders = async (minutes = 15) => {
 
         await prisma.$transaction(async (tx) => {
             for (const ord of expired) {
-                // delete order details
                 await tx.ticketOrderDetail.deleteMany({ where: { orderId: ord.id } });
 
-                // delete the order itself
                 await tx.ticketOrder.delete({ where: { id: ord.id } });
 
-                // if user has a cart, delete its details and the cart
                 const cart = ord.user?.TicketCart;
                 if (cart) {
                     await tx.ticketCartDetail.deleteMany({ where: { cartId: cart.id } });
