@@ -97,16 +97,20 @@ export const createSchema = z
     });
 
 export const updateSchema = z.object({
+    id: z.string().optional(),
     fullName: z.string().trim().min(1, { message: "Họ và tên không được để trống" }),
     email: z
         .string()
         .trim()
-        .refine((email) => emailRegex.test(email), { message: "Email không đúng định dạng" }),
+        .refine((email) => emailRegex.test(email), {
+            message: "Email không đúng định dạng",
+        }).optional(),
     phone: z
         .string()
         .trim()
-        .refine((phone) => phoneRegex.test(phone), { message: "Số điện thoại không hợp lệ" })
-        .optional(),
+        .refine((phone) => phoneRegex.test(phone), {
+            message: "Số điện thoại không hợp lệ",
+        }).optional(),
     birthDate: z
         .string()
         .trim()
@@ -114,6 +118,25 @@ export const updateSchema = z.object({
         .optional(),
     gender: z.string().min(1, { message: "Giới tính không được để trống" }).optional(),
     roleId: z.number().min(1, "Vai trò không hợp lệ")
-        .max(2, "Vai trò không hợp lệ").int("Vai trò không hợp lệ"),
+        .max(2, "Vai trò không hợp lệ").int("Vai trò không hợp lệ").optional(),
     accountType: z.enum(["SYSTEM", "GOOGLE", "FACEBOOK"]).optional()
+}).superRefine(async (data, ctx) => {
+    if (data.phone) {
+        if (await isPhoneExist(data.phone, data.id)) {
+            ctx.addIssue({
+                code: "custom",
+                path: ["phone"],
+                message: "Số điện thoại đã tồn tại",
+            });
+        }
+    }
+    if (data.email) {
+        if (await isEmailExist(data.email, data.id)) {
+            ctx.addIssue({
+                code: "custom",
+                path: ["email"],
+                message: "Email đã tồn tại",
+            });
+        }
+    }
 });

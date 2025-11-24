@@ -50,13 +50,21 @@ export const handleUserLogin = async (identifier, password) => {
     return jwt.sign(payload, secret, { expiresIn });
 };
 
-export const isEmailExist = async (email) => {
-    const user = await prisma.user.findUnique({ where: { email } });
+export const isEmailExist = async (email, excludeUserId = null) => {
+    const where = { email };
+    if (excludeUserId) {
+        where.NOT = { id: Number(excludeUserId) };
+    }
+    const user = await prisma.user.findFirst({ where });
     return !!user;
 };
 
-export const isPhoneExist = async (phone) => {
-    const user = await prisma.user.findUnique({ where: { phone } });
+export const isPhoneExist = async (phone, excludeUserId = null) => {
+    const where = { phone };
+    if (excludeUserId) {
+        where.NOT = { id: Number(excludeUserId) };
+    }
+    const user = await prisma.user.findFirst({ where });
     return !!user;
 };
 
