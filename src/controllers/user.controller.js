@@ -47,7 +47,7 @@ export const postCreateUser = async (req, res) => {
     try {
         const userData = {
             ...req.body,
-            roleId: Number(req.body.roleId)
+            roleId: Number(req.body.roleId),
         };
         const validate = await createSchema.safeParseAsync(userData);
         if (!validate.success) {
@@ -83,10 +83,25 @@ export const postCreateUser = async (req, res) => {
 
 export const putUpdateUser = async (req, res) => {
     try {
-        const userData = {
-            ...req.body,
-            roleId: Number(req.body.roleId)
-        };
+        const userData = { ...req.body, id: req.params.id };
+
+        if (userData.phone === null) userData.phone = undefined;
+        if (userData.gender === null) userData.gender = undefined;
+        if (userData.birthDate === null) userData.birthDate = undefined;
+
+        if (req.body.roleId) {
+            userData.roleId = Number(req.body.roleId);
+        }
+
+        const currentUser = await findUserById(req.params.id);
+        if (!currentUser) {
+            return res.status(404).json({ error: "Không tìm thấy người dùng" });
+        }
+
+        if (!userData.email) {
+            userData.email = currentUser.email;
+        }
+
         const validate = await updateSchema.safeParseAsync(userData);
         if (!validate.success) {
             return res.status(400).json({
@@ -105,14 +120,16 @@ export const putUpdateUser = async (req, res) => {
             phone,
             birthDate: birthDate ? new Date(birthDate) : undefined,
             gender,
-            accountType: accountType || "SYSTEM",
-            roleId: roleId
         };
 
+        if (req.user.role?.name === "ADMIN") {
+            if (roleId) updateData.roleId = roleId;
+            if (accountType) updateData.accountType = accountType;
+        }
+
         if (req.file) {
-            const currentUser = await findUserById(req.params.id);
             if (currentUser && currentUser.avatar) {
-                const oldAvatarPath = `../Frontend/public/images/user/${currentUser.avatar}`;
+                const oldAvatarPath = `../ticket-go-ptit/public/images/user/${currentUser.avatar}`;
                 if (fs.existsSync(oldAvatarPath)) {
                     fs.unlinkSync(oldAvatarPath);
                 }
@@ -122,7 +139,6 @@ export const putUpdateUser = async (req, res) => {
 
         const updatedUser = await updateUser(req.params.id, updateData);
 
-        // Generate new token with updated user info
         const newToken = await generateTokenForUser(req.params.id);
 
         res.json({

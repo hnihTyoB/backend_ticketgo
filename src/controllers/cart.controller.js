@@ -58,6 +58,44 @@ export const addTicketToCart = async (req, res) => {
     }
 };
 
+export const addMultipleTicketsToCart = async (req, res) => {
+    const user = req.user;
+
+    if (!user) {
+        return res.status(401).json({
+            success: false,
+            message: "Bạn chưa đăng nhập",
+            // redirect: "/login"
+        });
+    }
+
+    try {
+        const tickets = req.body.tickets; // Expecting an array of { ticketTypeId, quantity }
+        for (const ticket of tickets) {
+            const validate = await addToCartSchema.safeParseAsync({
+                ticketTypeId: Number(ticket.ticketTypeId),
+                quantity: Number(ticket.quantity),
+            });
+            if (!validate.success) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Dữ liệu không hợp lệ",
+                    errors: validate.error.issues.map(err => ({
+                        path: err.path[0],
+                        message: err.message
+                    }))
+                });
+            }
+            const { ticketTypeId, quantity } = validate.data;
+            await addToCart(ticketTypeId, quantity, user.id);
+        }
+        return res.status(200).json({ success: true, message: "Đã thêm vé vào giỏ hàng" });
+    } catch (error) {
+        console.error("AddMultipleTicketsToCart error:", error);
+        return res.status(500).json({ success: false, message: "Lỗi thêm vé vào giỏ hàng" });
+    }
+};
+
 export const getCart = async (req, res) => {
     const user = req.user;
 
@@ -427,5 +465,31 @@ export const vnpayCallback = async (req, res) => {
         console.error("VNPAY callback error:", error);
         const frontendUrl = `http://localhost:${process.env.FRONTEND_PORT || 8888}`;
         return res.redirect(`${frontendUrl}/checkout?error=callback_error`);
+    }
+};
+
+export const vnpayNotify = async (req, res) => {
+    try {
+        const query = Object.keys(req.query).length ? req.query : req.body;
+        const verifyResult = verifyReturnUrl(query);
+
+        if (!verifyResult.isVerified) {
+            console.error('VNPAY notify verification failed:', verifyResult);
+            return res.status(400).send('Invalid signature');
+        }
+
+        const orderId = verifyResult.transactionRef ? Number(verifyResult.transactionRef) : null;
+        if (!orderId) return res.status(400).send('Invalid order');
+
+        if (verifyResult.isSuccess) {
+            await completePayment(orderId, verifyResult.transactionRef);
+        } else {
+            await handlePaymentFailure(orderId);
+        }
+
+        return res.status(200).send('OK');
+    } catch (error) {
+        console.error('VNPAY notify error:', error);
+        return res.status(500).send('ERROR');
     }
 };

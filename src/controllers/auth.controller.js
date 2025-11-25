@@ -53,22 +53,9 @@ export const userRegister = async (req, res) => {
     }
 };
 
-export const successRedirect = (req, res) => {
-    const user = req.user;
-    if (!user) return res.status(401).json({ message: "User chưa đăng nhập" });
-
-    if (user.role?.name === "Admin") {
-        return res.redirect("/admin");
-    } else {
-        return res.redirect("/user");
-    }
-};
-
 export const userLogout = (req, res) => {
     // Với JWT, không cần xử lý session
-    // Có thể thêm logic blacklist token ở đây nếu cần
 
-    // Nếu có session, xóa nó
     if (req.session) {
         req.session.destroy(err => {
             if (err) {

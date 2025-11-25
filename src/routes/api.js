@@ -2,8 +2,8 @@ import express from "express";
 import { postCreateUser, getAllUsers, getUserById, putUpdateUser, deleteUser, getAllRoles } from "../controllers/user.controller.js";
 import { deleteEvent, getAllEventsWithFilter, getEventById, postCreateEvent, putUpdateEvent } from "../controllers/event.controller.js";
 import { getAllOrders, getOrderById, getOrderHistory, putUpdateStatus } from "../controllers/order.controller.js";
-import { successRedirect, userLogin, userLogout, userRegister } from "../controllers/auth.controller.js";
-import { addTicketToCart, checkOut, getCart, getThanks, handleCartToCheckout, placeOrder, removeTicketFromCart, updateQuantity, clearCartHandler } from "../controllers/cart.controller.js";
+import { userLogin, userLogout, userRegister } from "../controllers/auth.controller.js";
+import { addTicketToCart, checkOut, getCart, getThanks, handleCartToCheckout, placeOrder, removeTicketFromCart, updateQuantity, clearCartHandler, addMultipleTicketsToCart } from "../controllers/cart.controller.js";
 import { getDashboard } from "../controllers/dashboard.controller.js";
 import { getTicketTypesByEvent, postCreateTicketTypeById, putUpdateTicketTypeById, deleteTicketTypeById, putUpdateTicketSoldById } from "../controllers/ticket.controller.js";
 import { isAdmin, isLogin, isOwnerOrAdmin } from "../middlewares/auth.js";
@@ -13,7 +13,6 @@ import { eventUploadMiddleware } from "../middlewares/eventUpload.js";
 export const apiRoutes = (app) => {
     const authRouter = express.Router();
     authRouter.post("/login", userLogin);
-    authRouter.get("/success", successRedirect);
     authRouter.post("/register", userRegister);
     authRouter.post("/logout", userLogout);
 
@@ -43,6 +42,7 @@ export const apiRoutes = (app) => {
     const cartRouter = express.Router();
     cartRouter.get("/", getCart);
     cartRouter.post("/", addTicketToCart);
+    cartRouter.post("/add-multiple", addMultipleTicketsToCart);
     cartRouter.put("/", updateQuantity);
     // cartRouter.delete("/:id", removeTicketFromCart);
     cartRouter.delete("/", clearCartHandler);

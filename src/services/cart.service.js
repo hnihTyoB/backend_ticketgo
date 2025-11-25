@@ -289,7 +289,7 @@ export const handlePlaceOrder = async (
                     receiverEmail,
                     status: "PENDING",
                     paymentMethod: paymentMethod,
-                    paymentStatus: "PAYMENT_UNPAID",
+                    paymentStatus: "UNPAID",
                     userId: Number(userId),
                     ticketOrderDetails: {
                         create: cart.ticketCartDetails.map((item) => ({
@@ -339,7 +339,7 @@ export const completePayment = async (orderId, transactionRef) => {
             }
 
             // Kiểm tra đơn hàng đã thanh toán chưa
-            if (order.paymentStatus === "PAYMENT_SUCCESS") {
+            if (order.paymentStatus === "SUCCESS") {
                 console.log(`Order ${orderId} đã được thanh toán trước đó.`);
                 return;
             }
@@ -370,7 +370,7 @@ export const completePayment = async (orderId, transactionRef) => {
                 where: { id: Number(orderId) },
                 data: {
                     status: "COMPLETED",
-                    paymentStatus: "PAYMENT_SUCCESS",
+                    paymentStatus: "SUCCESS",
                     paymentRef: transactionRef || null,
                 },
             });
@@ -398,7 +398,7 @@ export const handlePaymentFailure = async (orderId) => {
         await prisma.ticketOrder.update({
             where: { id: Number(orderId) },
             data: {
-                paymentStatus: "PAYMENT_FAILED",
+                paymentStatus: "FAILED",
                 status: "CANCELLED",
             },
         });
@@ -407,6 +407,50 @@ export const handlePaymentFailure = async (orderId) => {
     } catch (error) {
         console.error("HandlePaymentFailure error:", error);
         return { success: false, error: error.message };
+    }
+};
+
+export const expirePendingOrders = async (minutes = 15) => {
+    const cutoff = new Date(Date.now() - minutes * 60 * 1000);
+    try {
+        // load pending orders older than cutoff, include user and cart info
+        const expired = await prisma.ticketOrder.findMany({
+            where: {
+                status: 'PENDING',
+                createdAt: { lt: cutoff },
+            },
+            include: {
+                user: {
+                    include: {
+                        TicketCart: {
+                            include: { ticketCartDetails: true }
+                        }
+                    }
+                },
+                ticketOrderDetails: true
+            }
+        });
+
+        if (!expired.length) return { count: 0 };
+
+        await prisma.$transaction(async (tx) => {
+            for (const ord of expired) {
+                await tx.ticketOrderDetail.deleteMany({ where: { orderId: ord.id } });
+
+                await tx.ticketOrder.delete({ where: { id: ord.id } });
+
+                const cart = ord.user?.TicketCart;
+                if (cart) {
+                    await tx.ticketCartDetail.deleteMany({ where: { cartId: cart.id } });
+                    await tx.ticketCart.delete({ where: { id: cart.id } });
+                }
+            }
+        });
+
+        return { count: expired.length };
+    } catch (error) {
+        console.error('expirePendingOrders error:', error);
+        throw error;
     }
 };
 
