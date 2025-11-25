@@ -25,10 +25,10 @@ export const handleUserLogin = async (identifier, password) => {
         include: { role: true }
     });
 
-    if (!user) throw new Error(`Tài khoản không tồn tại`);
+    if (!user) throw new Error(`Tên đăng nhập hoặc mật khẩu không đúng`);
 
     const isMatch = await comparePassword(password, user.password);
-    if (!isMatch) throw new Error("Mật khẩu không đúng");
+    if (!isMatch) throw new Error("Tên đăng nhập hoặc mật khẩu không đúng");
 
     const payload = {
         id: user.id,
@@ -50,17 +50,25 @@ export const handleUserLogin = async (identifier, password) => {
     return jwt.sign(payload, secret, { expiresIn });
 };
 
-export const isEmailExist = async (email) => {
-    const user = await prisma.user.findUnique({ where: { email } });
+export const isEmailExist = async (email, excludeUserId = null) => {
+    const where = { email };
+    if (excludeUserId) {
+        where.NOT = { id: Number(excludeUserId) };
+    }
+    const user = await prisma.user.findFirst({ where });
     return !!user;
 };
 
-export const isPhoneExist = async (phone) => {
-    const user = await prisma.user.findUnique({ where: { phone } });
+export const isPhoneExist = async (phone, excludeUserId = null) => {
+    const where = { phone };
+    if (excludeUserId) {
+        where.NOT = { id: Number(excludeUserId) };
+    }
+    const user = await prisma.user.findFirst({ where });
     return !!user;
 };
 
-export const registerUser = async ({ email, password, roleName = "USER" }) => {
+export const registerUser = async (fullName, email, phone, password, roleName = "USER") => {
     const newPassword = await hashPassword(password);
 
     const role = await prisma.role.findUnique({ where: { name: roleName } });
@@ -70,8 +78,9 @@ export const registerUser = async ({ email, password, roleName = "USER" }) => {
 
     const newUser = await prisma.user.create({
         data: {
-            email,
             fullName,
+            email,
+            phone,
             password: newPassword,
             accountType: ACCOUNT_TYPE.SYSTEM,
             roleId: role.id,

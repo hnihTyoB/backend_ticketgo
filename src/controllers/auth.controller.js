@@ -14,14 +14,15 @@ export const userLogin = async (req, res) => {
             });
         }
 
-        const { username, password } = validation.data;
-        const token = await handleUserLogin(username, password);
+        const { emailOrPhone, password } = validation.data;
+        const token = await handleUserLogin(emailOrPhone, password);
         if (!token) {
             return res.status(401).json({ error: "Tên đăng nhập hoặc mật khẩu không đúng" });
         }
-        res.json({ token });
+        res.json({ token, success: true });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error("Login error:", err);
+        res.status(401).json({ success: false, error: err.message });
     }
 };
 
@@ -38,8 +39,8 @@ export const userRegister = async (req, res) => {
             });
         }
 
-        const { email, password } = validation.data;
-        const newUser = await registerUser({ email, password });
+        const { fullName, email, phone, password } = validation.data;
+        const newUser = await registerUser(fullName, email, phone, password);
 
         res.status(201).json({
             message: "Đăng ký user thành công",
@@ -47,26 +48,14 @@ export const userRegister = async (req, res) => {
         });
     } catch (err) {
         console.error("Register user error:", err);
-        res.status(500).json({ message: "Lỗi server", error: err.message });
-    }
-};
-
-export const successRedirect = (req, res) => {
-    const user = req.user;
-    if (!user) return res.status(401).json({ message: "User chưa đăng nhập" });
-
-    if (user.role?.name === "Admin") {
-        return res.redirect("/admin");
-    } else {
-        return res.redirect("/user");
+        const msg = err?.message || "Lỗi server";
+        res.status(400).json({ success: false, message: msg });
     }
 };
 
 export const userLogout = (req, res) => {
     // Với JWT, không cần xử lý session
-    // Có thể thêm logic blacklist token ở đây nếu cần
 
-    // Nếu có session, xóa nó
     if (req.session) {
         req.session.destroy(err => {
             if (err) {

@@ -13,7 +13,8 @@ import { PrismaClient } from "@prisma/client";
 import passport from "passport";
 import { configPassportLocal } from "./src/middlewares/passport.local.js";
 // import { initDatabase } from "./src/config/seed.js";
-import { vnpayCallback } from "./src/controllers/cart.controller.js";
+import { vnpayCallback, vnpayNotify } from "./src/controllers/cart.controller.js";
+import { startExpireOrdersTask } from "./src/tasks/expireOrders.js";
 
 dotenv.config();
 
@@ -58,6 +59,9 @@ configPassportLocal();
 
 // VNPAY callback route - không cần authentication (VNPAY gọi từ bên ngoài)
 app.get("/api/carts/vnpay-callback", vnpayCallback);
+app.post("/api/carts/vnpay-notify", vnpayNotify);
+
+startExpireOrdersTask(process.env.VNPAY_EXPIRES_IN_MINUTES ? parseInt(process.env.VNPAY_EXPIRES_IN_MINUTES) : 15);
 
 app.use("/api", checkValidJWT);
 
@@ -66,5 +70,5 @@ apiRoutes(app);
 
 const PORT = process.env.PORT;
 app.listen(PORT, () => {
-    console.log(`✅ Server running at: http://localhost:${PORT}`);
+    console.log(`Server running at: http://localhost:${PORT}`);
 });
