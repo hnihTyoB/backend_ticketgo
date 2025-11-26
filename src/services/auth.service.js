@@ -68,7 +68,7 @@ export const isPhoneExist = async (phone, excludeUserId = null) => {
     return !!user;
 };
 
-export const registerUser = async (fullName, email, phone, password, roleName = "USER") => {
+export const registerUser = async (email, phone, password, roleName = "USER") => {
     const newPassword = await hashPassword(password);
 
     const role = await prisma.role.findUnique({ where: { name: roleName } });
