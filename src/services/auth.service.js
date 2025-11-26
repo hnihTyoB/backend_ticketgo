@@ -74,6 +74,8 @@ export const registerUser = async (fullName, email, phone, password, roleName = 
     const role = await prisma.role.findUnique({ where: { name: roleName } });
     if (!role) throw new Error("Default user role not found");
 
+    const fullName = email.split("@")[0];
+
     const newUser = await prisma.user.create({
         data: {
             fullName,
