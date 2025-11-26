@@ -110,7 +110,7 @@ model TicketOrder {
     receiverEmail String?  @db.VarChar(255)
     status        String   @default("PENDING") // PENDING, COMPLETED, CANCELLED
     paymentMethod String   @default("VNPAY") // BANKING, CREDIT_CARD, etc.
-    paymentStatus String // PAYMENT_UNPAID, PAYMENT_SUCCESS, PAYMENT_FAILED
+    paymentStatus String   @default("UNPAID") // UNPAID, SUCCESS, FAILED
     paymentRef    String?
     createdAt     DateTime @default(now())
 
