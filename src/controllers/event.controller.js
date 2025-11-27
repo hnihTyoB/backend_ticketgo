@@ -42,11 +42,13 @@ export const getAllEventsWithFilter = async (req, res) => {
         const category = req.query.category || null;
         const week = req.query.week === 'true';
         const month = req.query.month === 'true';
+        const from = req.query.from || null;
+        const to = req.query.to || null;
         const sort = req.query.sort || 'desc';
 
         const [events, totalPages] = await Promise.all([
-            findAllEventsWithFilter(page, limit, search, category, week, month, sort),
-            countTotalEventPagesWithFilter(limit, search, category, week, month),
+            findAllEventsWithFilter(page, limit, search, category, week, month, from, to, sort),
+            countTotalEventPagesWithFilter(limit, search, category, week, month, from, to),
         ]);
 
         res.status(200).json({

@@ -28,7 +28,7 @@ const getMonthRange = () => {
     return { startOfMonth, endOfMonth };
 };
 
-export const findAllEventsWithFilter = async (page, limit, search, category, week, month, sort) => {
+export const findAllEventsWithFilter = async (page, limit, search, category, week, month, from, to, sort) => {
     const skip = (page - 1) * limit;
 
     let whereCondition = {};
@@ -59,6 +59,18 @@ export const findAllEventsWithFilter = async (page, limit, search, category, wee
         whereCondition.category = category;
     }
 
+    if (from && to) {
+        const startDate = new Date(from);
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date(to);
+        endDate.setHours(23, 59, 59, 999);
+        whereCondition.startDate = {
+            ...whereCondition.startDate,
+            gte: startDate,
+            lte: endDate,
+        };
+    }
+
     const events = await prisma.event.findMany({
         skip: skip,
         take: limit,
@@ -74,7 +86,7 @@ export const findAllEventsWithFilter = async (page, limit, search, category, wee
     return events;
 };
 
-export const countTotalEventPagesWithFilter = async (limit, search, category, week, month) => {
+export const countTotalEventPagesWithFilter = async (limit, search, category, week, month, from, to) => {
     let whereCondition = {};
 
     if (search) {
@@ -101,6 +113,18 @@ export const countTotalEventPagesWithFilter = async (limit, search, category, we
 
     if (category) {
         whereCondition.category = category;
+    }
+
+    if (from && to) {
+        const startDate = new Date(from);
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date(to);
+        endDate.setHours(23, 59, 59, 999);
+        whereCondition.startDate = {
+            ...whereCondition.startDate,
+            gte: startDate,
+            lte: endDate,
+        };
     }
 
     const totalItems = await prisma.event.count({

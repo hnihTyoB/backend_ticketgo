@@ -62,18 +62,18 @@ model Event {
 }
 
 model TicketType {
-    id                  Int    @id @default(autoincrement())
-    type                String @db.VarChar(100) // Standard, VIP, v.v.
-    price               Int
-    quantity            Int
-    description         String   @db.MediumText
-    sold                Int?   @default(0)
+    id          Int    @id @default(autoincrement())
+    type        String @db.VarChar(100) // Standard, VIP, v.v.
+    price       Int
+    quantity    Int
+    description String @db.MediumText
+    sold        Int?   @default(0)
 
-    event               Event @relation(fields: [eventId], references: [id])
-    eventId             Int
+    event   Event @relation(fields: [eventId], references: [id])
+    eventId Int
 
-    ticketCartDetails   TicketCartDetail[]
-    ticketOrderDetails  TicketOrderDetail[]
+    ticketCartDetails  TicketCartDetail[]
+    ticketOrderDetails TicketOrderDetail[]
 
     @@map("ticket_types")
 }
@@ -85,6 +85,9 @@ model TicketCart {
     user              User               @relation(fields: [userId], references: [id])
     userId            Int                @unique
     ticketCartDetails TicketCartDetail[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @default(now()) @updatedAt
 
     @@map("ticket_carts")
 }
