@@ -134,6 +134,12 @@ export const removeFromCart = async (cartDetailId, userId) => {
             sum: { decrement: cartDetail.quantity },
         },
     });
+
+    // Chạm vào bản ghi để cập nhật `updatedAt`
+    await prisma.ticketCart.update({
+        where: { id: cartDetail.cartId },
+        data: {},
+    });
 };
 
 export const clearCart = async (userId) => {
@@ -185,6 +191,12 @@ export const updateCartItemQuantity = async (cartDetailId, newQuantity, userId) 
             where: { id: cartDetail.cartId },
             data: { sum: newSum },
         });
+
+        // Chạm vào bản ghi để cập nhật `updatedAt`
+        await prisma.ticketCart.update({
+            where: { id: cartDetail.cartId },
+            data: {},
+        });
     }
 };
 
@@ -221,6 +233,12 @@ export const prepareCartBeforeCheckout = async (currentCartDetails, cartId) => {
         await tx.ticketCart.update({
             where: { id: Number(cartId) },
             data: { sum: totalQuantity },
+        });
+
+        // Chạm vào bản ghi để cập nhật `updatedAt`
+        await tx.ticketCart.update({
+            where: { id: Number(cartId) },
+            data: {},
         });
     });
 };
@@ -413,7 +431,6 @@ export const handlePaymentFailure = async (orderId) => {
 export const expirePendingOrders = async (minutes = 15) => {
     const cutoff = new Date(Date.now() - minutes * 60 * 1000);
     try {
-        // load pending orders older than cutoff, include user and cart info
         const expired = await prisma.ticketOrder.findMany({
             where: {
                 status: 'PENDING',
@@ -450,6 +467,32 @@ export const expirePendingOrders = async (minutes = 15) => {
         return { count: expired.length };
     } catch (error) {
         console.error('expirePendingOrders error:', error);
+        throw error;
+    }
+};
+
+export const expireInactiveCarts = async (minutes = 15) => {
+    const cutoff = new Date(Date.now() - minutes * 60 * 1000);
+    try {
+        const expiredCarts = await prisma.ticketCart.findMany({
+            where: {
+                updatedAt: { lt: cutoff },
+            },
+            include: {
+                ticketCartDetails: true,
+            }
+        });
+
+        if (!expiredCarts.length) return { count: 0 };
+
+        const cartIds = expiredCarts.map(cart => cart.id);
+
+        await prisma.ticketCartDetail.deleteMany({ where: { cartId: { in: cartIds } } });
+        await prisma.ticketCart.deleteMany({ where: { id: { in: cartIds } } });
+
+        return { count: expiredCarts.length };
+    } catch (error) {
+        console.error('expireInactiveCarts error:', error);
         throw error;
     }
 };

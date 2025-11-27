@@ -4,7 +4,6 @@ import path from "path";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 import { apiRoutes } from "./src/routes/api.js";
-// import { initDatabase } from "./src/config/seed.js";
 import { checkValidJWT } from "./src/middlewares/jwt.js";
 import process from "process";
 import session from "express-session";
@@ -15,6 +14,7 @@ import { configPassportLocal } from "./src/middlewares/passport.local.js";
 // import { initDatabase } from "./src/config/seed.js";
 import { vnpayCallback, vnpayNotify } from "./src/controllers/cart.controller.js";
 import { startExpireOrdersTask } from "./src/tasks/expireOrders.js";
+import { startExpireCartsTask } from "./src/tasks/expireCarts.js";
 
 dotenv.config();
 
@@ -57,11 +57,11 @@ app.use(passport.authenticate('session'));
 
 configPassportLocal();
 
-// VNPAY callback route - không cần authentication (VNPAY gọi từ bên ngoài)
 app.get("/api/carts/vnpay-callback", vnpayCallback);
 app.post("/api/carts/vnpay-notify", vnpayNotify);
 
 startExpireOrdersTask(process.env.VNPAY_EXPIRES_IN_MINUTES ? parseInt(process.env.VNPAY_EXPIRES_IN_MINUTES) : 15);
+startExpireCartsTask(process.env.VNPAY_EXPIRES_IN_MINUTES ? parseInt(process.env.VNPAY_EXPIRES_IN_MINUTES) : 15);
 
 app.use("/api", checkValidJWT);
 
