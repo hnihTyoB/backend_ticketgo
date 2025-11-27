@@ -65,31 +65,26 @@ export const isPhoneExist = async (phone, excludeUserId = null) => {
   return !!user;
 };
 
-export const registerUser = async (
-  email,
-  phone,
-  password,
-  roleName = "USER"
-) => {
-  const newPassword = await hashPassword(password);
+export const registerUser = async (fullName, email, phone, password, roleName = "USER") => {
+    const newPassword = await hashPassword(password);
 
-  const role = await prisma.role.findUnique({ where: { name: roleName } });
-  if (!role) throw new Error("Default user role not found");
+    const role = await prisma.role.findUnique({ where: { name: roleName } });
+    if (!role) throw new Error("Default user role not found");
 
-  const fullName = email.split("@")[0];
+    const fullName = email.split("@")[0];
 
-  const newUser = await prisma.user.create({
-    data: {
-      fullName,
-      email,
-      phone,
-      password: newPassword,
-      accountType: ACCOUNT_TYPE.SYSTEM,
-      roleId: role.id,
-    },
-  });
+    const newUser = await prisma.user.create({
+        data: {
+            fullName,
+            email,
+            phone,
+            password: newPassword,
+            accountType: ACCOUNT_TYPE.SYSTEM,
+            roleId: role.id,
+        }
+    });
 
-  return newUser;
+    return newUser;
 };
 
 export const findUserWithRoleById = async (id) => {

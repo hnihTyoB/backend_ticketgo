@@ -3,7 +3,7 @@ import { postCreateUser, getAllUsers, getUserById, putUpdateUser, deleteUser, ge
 import { deleteEvent, getAllEventsWithFilter, getEventById, postCreateEvent, putUpdateEvent } from "../controllers/event.controller.js";
 import { getAllOrders, getOrderById, getOrderHistory, putUpdateStatus } from "../controllers/order.controller.js";
 import { userLogin, userLogout, userRegister } from "../controllers/auth.controller.js";
-import { addTicketToCart, checkOut, getCart, getThanks, handleCartToCheckout, placeOrder, removeTicketFromCart, updateQuantity, clearCartHandler, addMultipleTicketsToCart } from "../controllers/cart.controller.js";
+import { addTicketToCart, checkOut, getCart, getThanks, handleCartToCheckout, placeOrder, removeTicketFromCart, updateQuantity, clearCartHandler, addMultipleTicketsToCart, vnpayCallback, vnpayNotify } from "../controllers/cart.controller.js";
 import { getDashboard } from "../controllers/dashboard.controller.js";
 import { getTicketTypesByEvent, postCreateTicketTypeById, putUpdateTicketTypeById, deleteTicketTypeById, putUpdateTicketSoldById } from "../controllers/ticket.controller.js";
 import { isAdmin, isLogin, isOwnerOrAdmin } from "../middlewares/auth.js";
@@ -50,11 +50,13 @@ export const apiRoutes = (app) => {
     cartRouter.get("/checkout", checkOut);
     cartRouter.post("/place-order", placeOrder);
     cartRouter.get("/thanks", getThanks);
+    cartRouter.get("/vnpay-callback", vnpayCallback);
+    cartRouter.post("/vnpay-notify", vnpayNotify);
 
     const orderRouter = express.Router();
     orderRouter.get("/", isAdmin, getAllOrders);
     orderRouter.get("/history", isLogin, getOrderHistory);
-    orderRouter.get("/:id", isOwnerOrAdmin, getOrderById);
+    orderRouter.get("/:id", isLogin, getOrderById);
     orderRouter.put("/:id", isAdmin, putUpdateStatus);
 
     const dashboardRouter = express.Router();

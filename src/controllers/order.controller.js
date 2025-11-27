@@ -34,11 +34,19 @@ export const getAllOrders = async (req, res) => {
 
 export const getOrderById = async (req, res) => {
     const orderId = parseInt(req.params.id);
+    const user = req.user;
 
     try {
         const orderDetails = await findOrderById(orderId);
         if (!orderDetails) {
             return res.status(404).json({ success: false, message: "Không tìm thấy đơn hàng" });
+        }
+
+        if (user && user.role?.name !== "ADMIN" && orderDetails.userId !== user.id) {
+            return res.status(403).json({
+                success: false,
+                message: "Bạn không có quyền xem đơn hàng này"
+            });
         }
 
         return res.status(200).json({

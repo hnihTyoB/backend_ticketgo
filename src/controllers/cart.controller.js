@@ -368,7 +368,7 @@ export const placeOrder = async (req, res) => {
         }
 
         const clientIp = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || "127.0.0.1";
-        const backendUrl = `http://localhost:${process.env.PORT || 3000}`;
+        const backendUrl = process.env.BACKEND_BASE_URL || `http://localhost:${process.env.PORT || 9092}`;
         const returnUrl = `${backendUrl}/api/carts/vnpay-callback`;
 
         const paymentUrl = createPaymentUrl({
@@ -431,12 +431,12 @@ export const vnpayCallback = async (req, res) => {
 
         if (!verifyResult.isVerified) {
             console.error("VNPAY callback verification failed:", verifyResult);
-            const frontendUrl = `http://localhost:${process.env.FRONTEND_PORT || 8888}`;
+            const frontendUrl = process.env.FRONTEND_URL || `http://localhost:${process.env.FRONTEND_PORT || 5173}`;
             return res.redirect(`${frontendUrl}/checkout?error=verification_failed`);
         }
 
         const orderId = verifyResult.transactionRef ? Number(verifyResult.transactionRef) : null;
-        const frontendUrl = `http://localhost:${process.env.FRONTEND_PORT || 8888}`;
+        const frontendUrl = process.env.FRONTEND_URL || `http://localhost:${process.env.FRONTEND_PORT || 5173}`;
 
         if (!orderId) {
             console.error("Cannot get orderId from VNPAY callback");
@@ -463,7 +463,7 @@ export const vnpayCallback = async (req, res) => {
         }
     } catch (error) {
         console.error("VNPAY callback error:", error);
-        const frontendUrl = `http://localhost:${process.env.FRONTEND_PORT || 8888}`;
+        const frontendUrl = process.env.FRONTEND_URL || `http://localhost:${process.env.FRONTEND_PORT || 5173}`;
         return res.redirect(`${frontendUrl}/checkout?error=callback_error`);
     }
 };
