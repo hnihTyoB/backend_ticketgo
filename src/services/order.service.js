@@ -55,7 +55,7 @@ export const findOrderHistoryByUser = async (userId, page, limit, status = null,
         userId: Number(userId)
     };
 
-    if (status) {
+    if (status && status !== 'ALL') {
         whereCondition.status = status;
     }
 
@@ -104,12 +104,34 @@ export const findOrderHistoryByUser = async (userId, page, limit, status = null,
     });
 };
 
+export const getPendingTicketsTotalQuantity = async (userId) => {
+    const pendingOrders = await prisma.ticketOrder.findMany({
+        where: {
+            userId: Number(userId),
+            status: 'PENDING',
+        },
+        include: {
+            ticketOrderDetails: {
+                select: { quantity: true }
+            }
+        }
+    });
+
+    let totalTickets = 0;
+    for (const order of pendingOrders) {
+        for (const detail of order.ticketOrderDetails) {
+            totalTickets += detail.quantity;
+        }
+    }
+    return totalTickets;
+};
+
 export const countTotalOrderHistoryPages = async (userId, limit, status = null, eventTime = "UPCOMING") => {
     const whereCondition = {
         userId: Number(userId)
     };
 
-    if (status) {
+    if (status && status !== 'ALL') {
         whereCondition.status = status;
     }
 
@@ -141,8 +163,9 @@ export const countTotalOrderHistoryPages = async (userId, limit, status = null, 
     const totalItems = await prisma.ticketOrder.count({
         where: whereCondition,
     });
+
     const totalPages = Math.ceil(totalItems / limit);
-    return totalPages;
+    return { totalPages, totalItems };
 };
 
 export const updateStatus = async (id, status) => {

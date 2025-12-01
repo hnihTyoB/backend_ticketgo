@@ -1,7 +1,7 @@
 import express from "express";
 import { postCreateUser, getAllUsers, getUserById, putUpdateUser, deleteUser, getAllRoles } from "../controllers/user.controller.js";
 import { deleteEvent, getAllEventsWithFilter, getEventById, postCreateEvent, putUpdateEvent } from "../controllers/event.controller.js";
-import { getAllOrders, getOrderById, getOrderHistory, putUpdateStatus } from "../controllers/order.controller.js";
+import { getAllOrders, getOrderById, getOrderHistory, getPendingTicketsCount, putUpdateStatus } from "../controllers/order.controller.js";
 import { userLogin, userLogout, userRegister } from "../controllers/auth.controller.js";
 import { addTicketToCart, checkOut, getCart, getThanks, handleCartToCheckout, placeOrder, removeTicketFromCart, updateQuantity, clearCartHandler, addMultipleTicketsToCart, vnpayCallback, vnpayNotify } from "../controllers/cart.controller.js";
 import { getDashboard } from "../controllers/dashboard.controller.js";
@@ -56,6 +56,7 @@ export const apiRoutes = (app) => {
     const orderRouter = express.Router();
     orderRouter.get("/", isAdmin, getAllOrders);
     orderRouter.get("/history", isLogin, getOrderHistory);
+    orderRouter.get("/pending-tickets-count", isLogin, getPendingTicketsCount);
     orderRouter.get("/:id", isLogin, getOrderById);
     orderRouter.put("/:id", isAdmin, putUpdateStatus);
 

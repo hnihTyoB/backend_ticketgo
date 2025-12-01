@@ -1,6 +1,6 @@
 import { TOTAL_ITEM_PER_PAGE } from "../config/constant.js";
 import {
-    countAllOrderPages,
+    countAllOrderPages, getPendingTicketsTotalQuantity,
     findAllOrders,
     findOrderById,
     findOrderHistoryByUser,
@@ -80,14 +80,33 @@ export const getOrderHistory = async (req, res) => {
 
         const status = req.query.status || "COMPLETED";
         const eventTime = req.query.eventTime || "UPCOMING";
-        const [orders, totalPages] = await Promise.all([
+        const [orders, { totalPages, totalItems }] = await Promise.all([
             findOrderHistoryByUser(user.id, page, limit, status, eventTime),
             countTotalOrderHistoryPages(user.id, limit, status, eventTime),
         ]);
-        return res.status(200).json({ success: true, orders, totalPages });
+        return res.status(200).json({ success: true, orders, totalPages, totalItems });
     } catch (err) {
         console.error(err);
         return res.status(500).json({ success: false, message: "Lỗi server khi lấy vé đã mua", error: err.message });
+    }
+};
+
+export const getPendingTicketsCount = async (req, res) => {
+    const user = req.user;
+
+    if (!user) {
+        return res.status(401).json({
+            success: false,
+            message: "Bạn chưa đăng nhập",
+        });
+    }
+
+    try {
+        const totalTickets = await getPendingTicketsTotalQuantity(user.id);
+        return res.status(200).json({ success: true, totalTickets });
+    } catch (err) {
+        console.error("GetPendingTicketsCount error:", err);
+        return res.status(500).json({ success: false, message: "Lỗi server khi lấy số lượng vé đang xử lý", error: err.message });
     }
 };
 
