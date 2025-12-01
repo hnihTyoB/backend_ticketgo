@@ -10,7 +10,8 @@ import {
     countTotalCartPages,
     completePayment,
     handlePaymentFailure,
-    clearCart
+    clearCart,
+    handleRetryPayment
 } from "../services/cart.service.js";
 import { createPaymentUrl, verifyReturnUrl } from "../services/vnpay.service.js";
 import process from "process";
@@ -491,5 +492,45 @@ export const vnpayNotify = async (req, res) => {
     } catch (error) {
         console.error('VNPAY notify error:', error);
         return res.status(500).send('ERROR');
+    }
+};
+
+export const retryPayment = async (req, res) => {
+    const user = req.user;
+    const { orderId } = req.params;
+
+    if (!user) {
+        return res.status(401).json({ success: false, message: "Bạn chưa đăng nhập" });
+    }
+
+    try {
+        const { order, error } = await handleRetryPayment(orderId, user.id);
+
+        if (error) {
+            return res.status(400).json({ success: false, message: error });
+        }
+
+        const clientIp = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || "127.0.0.1";
+        const backendUrl = process.env.BACKEND_BASE_URL || `http://localhost:${process.env.PORT || 9092}`;
+        const returnUrl = `${backendUrl}/api/carts/vnpay-callback`;
+
+        const paymentUrl = createPaymentUrl({
+            amount: order.totalPrice,
+            orderId: order.id,
+            orderInfo: `Thanh toán lại đơn hàng #${order.id}`,
+            ipAddr: clientIp,
+            returnUrl: returnUrl,
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Tạo lại link thanh toán thành công.",
+            paymentUrl: paymentUrl,
+            orderId: order.id,
+        });
+
+    } catch (error) {
+        console.error("RetryPayment error:", error);
+        return res.status(500).json({ success: false, message: "Lỗi khi thử thanh toán lại." });
     }
 };

@@ -503,3 +503,51 @@ export const calculateCartTotal = (cartDetails) => {
     }
     return cartDetails.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 };
+
+export const handleRetryPayment = async (orderId, userId) => {
+    try {
+        const order = await prisma.ticketOrder.findFirst({
+            where: {
+                id: Number(orderId),
+                userId: Number(userId),
+                status: 'PENDING',
+                paymentStatus: 'UNPAID',
+            },
+            include: {
+                ticketOrderDetails: {
+                    include: {
+                        ticketType: {
+                            include: { event: true }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!order) {
+            throw new Error("Đơn hàng không hợp lệ hoặc đã hết hạn.");
+        }
+
+        // Kiểm tra xem sự kiện đã diễn ra chưa
+        for (const detail of order.ticketOrderDetails) {
+            if (new Date(detail.ticketType.event.startDate) <= new Date()) {
+                throw new Error(`Sự kiện "${detail.ticketType.event.title}" đã diễn ra.`);
+            }
+        }
+
+        // Kiểm tra lại số lượng vé
+        for (const detail of order.ticketOrderDetails) {
+            const ticketType = detail.ticketType;
+            const availableQuantity = ticketType.quantity - (ticketType.sold || 0);
+            if (availableQuantity < detail.quantity) {
+                throw new Error(`Loại vé "${ticketType.type}" không đủ số lượng! Chỉ còn ${availableQuantity} vé.`);
+            }
+        }
+
+        return { order, error: null };
+
+    } catch (error) {
+        console.error("handleRetryPayment error:", error);
+        return { order: null, error: error.message };
+    }
+};

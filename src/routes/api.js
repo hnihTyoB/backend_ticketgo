@@ -3,7 +3,7 @@ import { postCreateUser, getAllUsers, getUserById, putUpdateUser, deleteUser, ge
 import { deleteEvent, getAllEventsWithFilter, getEventById, postCreateEvent, putUpdateEvent } from "../controllers/event.controller.js";
 import { getAllOrders, getOrderById, getOrderHistory, getPendingTicketsCount, putUpdateStatus } from "../controllers/order.controller.js";
 import { userLogin, userLogout, userRegister } from "../controllers/auth.controller.js";
-import { addTicketToCart, checkOut, getCart, getThanks, handleCartToCheckout, placeOrder, removeTicketFromCart, updateQuantity, clearCartHandler, addMultipleTicketsToCart, vnpayCallback, vnpayNotify } from "../controllers/cart.controller.js";
+import { addTicketToCart, checkOut, getCart, getThanks, handleCartToCheckout, placeOrder, removeTicketFromCart, updateQuantity, clearCartHandler, addMultipleTicketsToCart, vnpayCallback, vnpayNotify, retryPayment } from "../controllers/cart.controller.js";
 import { getDashboard } from "../controllers/dashboard.controller.js";
 import { getTicketTypesByEvent, postCreateTicketTypeById, putUpdateTicketTypeById, deleteTicketTypeById, putUpdateTicketSoldById } from "../controllers/ticket.controller.js";
 import { isAdmin, isLogin, isOwnerOrAdmin } from "../middlewares/auth.js";
@@ -59,6 +59,7 @@ export const apiRoutes = (app) => {
     orderRouter.get("/pending-tickets-count", isLogin, getPendingTicketsCount);
     orderRouter.get("/:id", isLogin, getOrderById);
     orderRouter.put("/:id", isAdmin, putUpdateStatus);
+    orderRouter.post("/:orderId/retry-payment", isLogin, retryPayment);
 
     const dashboardRouter = express.Router();
     dashboardRouter.get("/count", getDashboard);
