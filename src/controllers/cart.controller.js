@@ -497,14 +497,14 @@ export const vnpayNotify = async (req, res) => {
 
 export const retryPayment = async (req, res) => {
     const user = req.user;
-    const { orderId } = req.params;
+    const { id } = req.params;
 
     if (!user) {
         return res.status(401).json({ success: false, message: "Bạn chưa đăng nhập" });
     }
 
     try {
-        const { order, error } = await handleRetryPayment(orderId, user.id);
+        const { order, error } = await handleRetryPayment(id, user.id);
 
         if (error) {
             return res.status(400).json({ success: false, message: error });
