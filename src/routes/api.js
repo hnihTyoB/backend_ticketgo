@@ -59,7 +59,7 @@ export const apiRoutes = (app) => {
     orderRouter.get("/pending-tickets-count", isLogin, getPendingTicketsCount);
     orderRouter.get("/:id", isLogin, getOrderById);
     orderRouter.put("/:id", isAdmin, putUpdateStatus);
-    orderRouter.post("/:orderId/retry-payment", isLogin, retryPayment);
+    orderRouter.post("/:id/retry-payment", isLogin, retryPayment);
 
     const dashboardRouter = express.Router();
     dashboardRouter.get("/count", getDashboard);

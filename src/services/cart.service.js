@@ -1,4 +1,5 @@
 import { prisma } from "../config/client.js";
+import { sendOrderConfirmationEmail } from "./email.service.js";
 
 export const addToCart = async (ticketTypeId, quantity, userId) => {
     const ticketType = await prisma.ticketType.findUnique({
@@ -403,6 +404,29 @@ export const completePayment = async (orderId, transactionRef) => {
                 });
             }
         });
+
+        // Sau khi transaction thành công, lấy lại thông tin đơn hàng để gửi email
+        const orderDetailsForEmail = await prisma.ticketOrder.findUnique({
+            where: { id: Number(orderId) },
+            include: {
+                user: true,
+                ticketOrderDetails: {
+                    include: {
+                        ticketType: {
+                            include: {
+                                event: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+
+        if (orderDetailsForEmail) {
+            sendOrderConfirmationEmail(orderDetailsForEmail).catch(err => {
+                console.error(`Gửi email xác nhận đơn hàng cho ${orderId} thất bại:`, err);
+            });
+        }
 
         return { success: true, error: null };
     } catch (error) {
