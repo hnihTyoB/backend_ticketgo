@@ -20,14 +20,8 @@ dotenv.config();
 
 const app = express();
 
-// Middleware to log all incoming requests
-app.use((req, res, next) => {
-    console.log(`Incoming Request: ${req.method} ${req.originalUrl}`);
-    next();
-});
-
 app.use(cors({
-    origin: [process.env.BACKEND_BASE_URL, 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:8888'],
+    origin: [process.env.BACKEND_BASE_URL, 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:8888', 'https://ticketgo-ptit.vercel.app', 'https://ticketgo-dev-environment.vercel.app'],
     credentials: true,
 }));
 
