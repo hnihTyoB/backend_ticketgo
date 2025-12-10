@@ -4,7 +4,7 @@ import { deleteEvent, getAllEventsWithFilter, getEventById, postCreateEvent, put
 import { getAllOrders, getOrderById, getOrderHistory, getPendingTicketsCount, putUpdateStatus } from "../controllers/order.controller.js";
 import { userLogin, userLogout, userRegister } from "../controllers/auth.controller.js";
 import { addTicketToCart, checkOut, getCart, getThanks, handleCartToCheckout, placeOrder, removeTicketFromCart, updateQuantity, clearCartHandler, addMultipleTicketsToCart, vnpayCallback, vnpayNotify, retryPayment } from "../controllers/cart.controller.js";
-import { getDashboard } from "../controllers/dashboard.controller.js";
+import { getDashboard, getCharts } from "../controllers/dashboard.controller.js";
 import { getTicketTypesByEvent, postCreateTicketTypeById, putUpdateTicketTypeById, deleteTicketTypeById, putUpdateTicketSoldById } from "../controllers/ticket.controller.js";
 import { isAdmin, isLogin, isOwnerOrAdmin } from "../middlewares/auth.js";
 import { userUploadMiddleware } from "../middlewares/userUpload.js";
@@ -63,6 +63,7 @@ export const apiRoutes = (app) => {
 
     const dashboardRouter = express.Router();
     dashboardRouter.get("/count", getDashboard);
+    dashboardRouter.get("/charts", getCharts);
 
     app.use("/api/auth", authRouter);
     app.use("/api/users", userRouter);
