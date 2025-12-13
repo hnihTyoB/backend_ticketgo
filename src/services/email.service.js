@@ -137,25 +137,44 @@ const generateOrderConfirmationHTML = (order) => {
             
             <div style="text-align:center; margin-top:30px;">
                 <p style="font-size:14px; margin-bottom:10px; font-weight:bold;">Family of Brands</p>
-                <img src="https://salt.tkbcdn.com/ts/ds/32/dc/a2/7871f1207e8c4c2747698b5aa6d15a56.png"
-                    alt="ticketbox logo" style="height:28px; margin-right:15px;" />
-                <img src="https://salt.tkbcdn.com/ts/ds/e5/6d/9a/a5262401410b7057b04114ad15b93d85.png"
-                    alt="VNPay logo" style="height:28px;" />
+                <div style="display:inline-flex; align-items:center; justify-content:center; gap:16px;">
+                    <div style="padding:4px 10px; border-radius:6px; background:#111827; display:inline-flex; align-items:center; justify-content:center;">
+                        <img src="https://salt.tkbcdn.com/ts/ds/32/dc/a2/7871f1207e8c4c2747698b5aa6d15a56.png"
+                            alt="ticketbox logo" style="height:22px; display:block;" />
+                    </div>
+                    <div style="padding:4px 10px; border-radius:6px; background:#ffffff; border:1px solid #e5e7eb; display:inline-flex; align-items:center; justify-content:center;">
+                        <img src="https://salt.tkbcdn.com/ts/ds/e5/6d/9a/a5262401410b7057b04114ad15b93d85.png"
+                            alt="VNPay logo" style="height:22px; display:block;" />
+                    </div>
+                </div>
             </div>
 
         </div>
 
-        <div style="text-align:center; padding:20px; background:#333; font-size:12px; color:#aaa;">
-            <div style="margin-bottom:15px; font-size:24px;">
-                <a href="#" style="color:white; text-decoration:none; margin:0 8px;">📘</a> 
-                <a href="#" style="color:white; text-decoration:none; margin:0 8px;">📸</a> 
-                <a href="#" style="color:white; text-decoration:none; margin:0 8px;">✉️</a> 
-                <a href="#" style="color:white; text-decoration:none; margin:0 8px;">🔗</a>
+        <div style="text-align:center; padding:20px; background:#111827; font-size:12px; color:#e5e7eb;">
+            <div style="margin-bottom:10px; font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#9ca3af;">
+                Kết nối với TicketGo
+            </div>
+
+            <div style="margin-bottom:16px;">
+                <a href="#" style="display:inline-block; margin:0 6px; padding:6px 12px; border-radius:999px; background:#1f2937; color:#e5e7eb; text-decoration:none; font-size:12px;">
+                    Facebook
+                </a>
+                <a href="#" style="display:inline-block; margin:0 6px; padding:6px 12px; border-radius:999px; background:#1f2937; color:#e5e7eb; text-decoration:none; font-size:12px;">
+                    Instagram
+                </a>
+                <a href="#" style="display:inline-block; margin:0 6px; padding:6px 12px; border-radius:999px; background:#1f2937; color:#e5e7eb; text-decoration:none; font-size:12px;">
+                    Website
+                </a>
+                <a href="#" style="display:inline-block; margin:0 6px; padding:6px 12px; border-radius:999px; background:#1f2937; color:#e5e7eb; text-decoration:none; font-size:12px;">
+                    Liên hệ
+                </a>
             </div>
             
-            <p style="margin:0; line-height:1.5;">
-                © Copyright 2025 - Công ty TNHH TicketGo<br>
-                Bạn đang nhận được email này vì bạn đã đăng ký tài khoản trên trang web hoặc ứng dụng của chúng tôi.
+            <p style="margin:0; line-height:1.6; color:#9ca3af;">
+                2025 - Công ty TNHH TicketGo<br>
+                Bạn nhận được email này vì đã đặt vé hoặc đăng ký tài khoản trên hệ thống TicketGo.<br>
+                Nếu đây không phải là bạn, vui lòng bỏ qua email này.
             </p>
         </div>
 
