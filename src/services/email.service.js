@@ -68,11 +68,11 @@ const generateOrderConfirmationHTML = (order) => {
             </h1>
 
             <div style="margin:8px 0; font-size:16px; display:flex; align-items:center;">
-                <span style="color:#2ecc71; margin-right:8px; font-size:18px;">&#x23F1;</span>
+                <span style="color:#2ecc71; margin-right:8px; font-size:18px;">⏰</span>
                 ${eventTime}
             </div>
             <div style="margin:8px 0; font-size:16px; display:flex; align-items:flex-start;">
-                <span style="color:#2ecc71; margin-right:8px; font-size:18px;">&#x1F4CD;</span>
+                <span style="color:#2ecc71; margin-right:8px; font-size:18px;">📍</span>
                 <span style="line-height:1.4;">${eventInfo.location}</span>
             </div>
 
