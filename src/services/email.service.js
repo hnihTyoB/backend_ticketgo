@@ -32,6 +32,8 @@ const generateOrderConfirmationHTML = (order) => {
 
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     const ticketViewUrl = `${frontendUrl}/my-tickets`;
+    // Use public URL for logo in email
+    const logoUrl = 'https://res.cloudinary.com/dj950jydk/image/upload/v1765815755/ticketgo_logo_ve8lvk.png';
 
     // Tạo các dòng cho từng loại vé trong đơn hàng
     const ticketRowsHTML = orderDetails.map(item => {
@@ -55,8 +57,8 @@ const generateOrderConfirmationHTML = (order) => {
     <div style="max-width:600px; margin:0 auto; background:#ffffff; font-family:Arial, sans-serif; box-shadow:0 0 10px rgba(0,0,0,0.1);">
 
         <div style="background:#333333; padding:15px 20px; color:white; display:flex; align-items:center;">
-            <img src="https://salt.tkbcdn.com/ts/ds/32/dc/a2/7871f1207e8c4c2747698b5aa6d15a56.png"
-                 alt="ticketbox logo" style="height:24px; filter: invert(100%);" />
+            <img src="${logoUrl}"
+                 alt="TicketGo logo" style="height:24px;" />
             <div style="font-size:16px; font-weight:600; margin-left: auto;">🎫 Vé của tôi</div>
         </div>
 
@@ -139,8 +141,8 @@ const generateOrderConfirmationHTML = (order) => {
                 <p style="font-size:14px; margin-bottom:10px; font-weight:bold;">Family of Brands</p>
                 <div style="display:inline-flex; align-items:center; justify-content:center; gap:16px;">
                     <div style="padding:4px 10px; border-radius:6px; background:#111827; display:inline-flex; align-items:center; justify-content:center;">
-                        <img src="https://salt.tkbcdn.com/ts/ds/32/dc/a2/7871f1207e8c4c2747698b5aa6d15a56.png"
-                            alt="ticketbox logo" style="height:22px; display:block;" />
+                        <img src="${logoUrl}"
+                            alt="TicketGo logo" style="height:22px; display:block;" />
                     </div>
                     <div style="padding:4px 10px; border-radius:6px; background:#ffffff; border:1px solid #e5e7eb; display:inline-flex; align-items:center; justify-content:center;">
                         <img src="https://salt.tkbcdn.com/ts/ds/e5/6d/9a/a5262401410b7057b04114ad15b93d85.png"
