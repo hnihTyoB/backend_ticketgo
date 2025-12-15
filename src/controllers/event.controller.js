@@ -168,6 +168,9 @@ export const deleteEvent = async (req, res) => {
         await removeEvent(req.params.id);
         res.json({ message: "Xóa sự kiện thành công" });
     } catch (err) {
+        if (err.message.includes("Không thể xóa sự kiện")) {
+            return res.status(400).json({ message: err.message });
+        }
         res.status(500).json({ message: "Lỗi server", error: err.message });
     }
 };

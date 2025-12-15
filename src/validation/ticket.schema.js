@@ -10,8 +10,5 @@ export const ticketTypeSchema = z.object({
     quantity: z.number()
         .int("Số lượng phải là số nguyên")
         .min(1, "Số lượng phải lớn hơn 0"),
-    description: z.string()
-        .trim()
-        .min(5, "Mô tả vé phải có ít nhất 5 ký tự")
-        .max(255, "Mô tả vé không được quá 255 ký tự")
+    description: z.string().max(1000, "Mô tả không được quá 1000 ký tự").optional(),
 });
