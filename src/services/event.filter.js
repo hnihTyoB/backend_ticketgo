@@ -20,6 +20,7 @@ const getMonthRange = () => {
     const now = new Date();
 
     const startOfMonth = new Date(now);
+    startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
 
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);

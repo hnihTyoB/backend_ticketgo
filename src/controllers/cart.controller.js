@@ -460,7 +460,7 @@ export const vnpayCallback = async (req, res) => {
 
             await handlePaymentFailure(orderId);
 
-            return res.redirect(`${frontendUrl}/checkout?error=payment_failed&orderId=${orderId}`);
+            return res.redirect(`${frontendUrl}/cancelled?orderId=${orderId}`);
         }
     } catch (error) {
         console.error("VNPAY callback error:", error);

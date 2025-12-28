@@ -44,11 +44,36 @@ export const updateEvent = async (id, data) => {
 };
 
 export const removeEvent = async (id) => {
+    const eventId = Number(id);
+
+    const ticketTypes = await prisma.ticketType.findMany({
+        where: { eventId: eventId },
+        select: { id: true }
+    });
+
+    const ticketTypeIds = ticketTypes.map(t => t.id);
+
+    if (ticketTypeIds.length > 0) {
+        const orderDetail = await prisma.ticketOrderDetail.findFirst({
+            where: { ticketTypeId: { in: ticketTypeIds } }
+        });
+        if (orderDetail) {
+            throw new Error("Không thể xóa sự kiện vì đã có vé được bán trong đơn hàng.");
+        }
+
+        const cartDetail = await prisma.ticketCartDetail.findFirst({
+            where: { ticketTypeId: { in: ticketTypeIds } }
+        });
+        if (cartDetail) {
+            throw new Error("Không thể xóa sự kiện vì đang có vé trong giỏ hàng của người dùng.");
+        }
+    }
+
     await prisma.ticketType.deleteMany({
-        where: { eventId: Number(id) }
+        where: { eventId: eventId }
     });
 
     return await prisma.event.delete({
-        where: { id: Number(id) }
+        where: { id: eventId }
     });
 };
