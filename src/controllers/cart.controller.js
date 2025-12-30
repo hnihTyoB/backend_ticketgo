@@ -369,7 +369,7 @@ export const placeOrder = async (req, res) => {
         }
 
         const clientIp = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || "127.0.0.1";
-        const backendUrl = process.env.BACKEND_BASE_URL || `http://localhost:${process.env.PORT || 9092}`;
+        const backendUrl = process.env.VITE_API_URL || `http://localhost:${process.env.PORT || 9092}`;
         const returnUrl = `${backendUrl}/api/carts/vnpay-callback`;
 
         const paymentUrl = createPaymentUrl({
@@ -511,7 +511,7 @@ export const retryPayment = async (req, res) => {
         }
 
         const clientIp = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || "127.0.0.1";
-        const backendUrl = process.env.BACKEND_BASE_URL || `http://localhost:${process.env.PORT || 9092}`;
+        const backendUrl = process.env.VITE_API_URL || `http://localhost:${process.env.PORT || 9092}`;
         const returnUrl = `${backendUrl}/api/carts/vnpay-callback`;
 
         const paymentUrl = createPaymentUrl({

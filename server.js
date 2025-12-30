@@ -21,7 +21,7 @@ dotenv.config();
 const app = express();
 
 app.use(cors({
-    origin: [process.env.BACKEND_BASE_URL, 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:8888', 'https://ticketgo-ptit.vercel.app', 'https://ticketgo-dev-environment.vercel.app'],
+    origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:8888', 'https://ticketgo-ptit.vercel.app', 'https://ticketgo-dev-environment.vercel.app'],
     credentials: true,
 }));
 
