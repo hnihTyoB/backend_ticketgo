@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev-web": "concurrently \"npm run dev\" \"npm run start-frontend\"",
-    "start-frontend": "cd ../ticket-go-ptit/ && npm run dev",
+    "start-frontend": "cd ../frontend_ticketgo/ && npm run dev",
     "dev": "npm run server",
     "start": "npm run server",
     "build": "vite build",

@@ -21,13 +21,13 @@ dotenv.config();
 const app = express();
 
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:8888', 'https://ticketgo-ptit.vercel.app', 'https://ticketgo-dev-environment.vercel.app'],
+    origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:8888', 'https://ticketgo-ptit.vercel.app'],
     credentials: true,
 }));
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-app.use("/images", express.static(path.join(__dirname, "../ticket-go-ptit/public/images")));
+app.use("/images", express.static(path.join(__dirname, "public/images")));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

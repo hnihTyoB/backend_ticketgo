@@ -369,7 +369,7 @@ export const placeOrder = async (req, res) => {
         }
 
         const clientIp = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || "127.0.0.1";
-        const backendUrl = process.env.VITE_API_URL || `http://localhost:${process.env.PORT || 9092}`;
+        const backendUrl = process.env.BACKEND_URL;
         const returnUrl = `${backendUrl}/api/carts/vnpay-callback`;
 
         const paymentUrl = createPaymentUrl({
@@ -432,12 +432,12 @@ export const vnpayCallback = async (req, res) => {
 
         if (!verifyResult.isVerified) {
             console.error("VNPAY callback verification failed:", verifyResult);
-            const frontendUrl = process.env.FRONTEND_URL || `http://localhost:${process.env.FRONTEND_PORT || 5173}`;
+            const frontendUrl = process.env.FRONTEND_URL;
             return res.redirect(`${frontendUrl}/checkout?error=verification_failed`);
         }
 
         const orderId = verifyResult.transactionRef ? Number(verifyResult.transactionRef) : null;
-        const frontendUrl = process.env.FRONTEND_URL || `http://localhost:${process.env.FRONTEND_PORT || 5173}`;
+        const frontendUrl = process.env.FRONTEND_URL;
 
         if (!orderId) {
             console.error("Cannot get orderId from VNPAY callback");
@@ -464,7 +464,7 @@ export const vnpayCallback = async (req, res) => {
         }
     } catch (error) {
         console.error("VNPAY callback error:", error);
-        const frontendUrl = process.env.FRONTEND_URL || `http://localhost:${process.env.FRONTEND_PORT || 5173}`;
+        const frontendUrl = process.env.FRONTEND_URL;
         return res.redirect(`${frontendUrl}/checkout?error=callback_error`);
     }
 };
@@ -511,7 +511,7 @@ export const retryPayment = async (req, res) => {
         }
 
         const clientIp = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || "127.0.0.1";
-        const backendUrl = process.env.VITE_API_URL || `http://localhost:${process.env.PORT || 9092}`;
+        const backendUrl = process.env.BACKEND_URL;
         const returnUrl = `${backendUrl}/api/carts/vnpay-callback`;
 
         const paymentUrl = createPaymentUrl({

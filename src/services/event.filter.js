@@ -1,4 +1,5 @@
 import { prisma } from "../config/client.js";
+import { CATEGORIES } from "../config/constant.js";
 
 const getWeekRange = () => {
     const now = new Date();
@@ -57,7 +58,10 @@ export const findAllEventsWithFilter = async (page, limit, search, category, wee
     }
 
     if (category) {
-        whereCondition.category = category;
+        const categoryValue = CATEGORIES[category.toUpperCase()];
+        if (categoryValue) {
+            whereCondition.category = categoryValue;
+        }
     }
 
     if (from && to) {
@@ -113,7 +117,10 @@ export const countTotalEventPagesWithFilter = async (limit, search, category, we
     }
 
     if (category) {
-        whereCondition.category = category;
+        const categoryValue = CATEGORIES[category.toUpperCase()];
+        if (categoryValue) {
+            whereCondition.category = categoryValue;
+        }
     }
 
     if (from && to) {
