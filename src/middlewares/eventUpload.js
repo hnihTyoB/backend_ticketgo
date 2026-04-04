@@ -1,8 +1,6 @@
 import multer from "multer";
-import path from "path";
-import { v4 as uuidv4 } from "uuid";
 import sharp from "sharp";
-import fs from "fs";
+import { v2 as cloudinary } from "cloudinary";
 
 export const eventUploadMiddleware = (fieldName, dir, {
     maxWidth = 3840,
@@ -13,12 +11,7 @@ export const eventUploadMiddleware = (fieldName, dir, {
 } = {}) => {
     return (req, res, next) => {
         const upload = multer({
-            storage: multer.diskStorage({
-                destination: "../ticket-go-ptit/public/images/" + dir,
-                filename: (req, file, cb) => {
-                    cb(null, uuidv4() + path.extname(file.originalname));
-                }
-            }),
+            storage: multer.memoryStorage(),
             limits: {
                 fileSize: 1024 * 1024 * maxFileSize
             },
@@ -52,11 +45,10 @@ export const eventUploadMiddleware = (fieldName, dir, {
             }
 
             try {
-                const metadata = await sharp(req.file.path).metadata();
+                const metadata = await sharp(req.file.buffer).metadata();
                 const { width, height } = metadata;
 
                 if (width > maxWidth || height > maxHeight) {
-                    fs.unlinkSync(req.file.path);
                     return res.status(400).json({
                         errors: [
                             {
@@ -68,7 +60,6 @@ export const eventUploadMiddleware = (fieldName, dir, {
                 }
 
                 if (width < minWidth || height < minHeight) {
-                    fs.unlinkSync(req.file.path);
                     return res.status(400).json({
                         errors: [
                             {
@@ -78,11 +69,21 @@ export const eventUploadMiddleware = (fieldName, dir, {
                         ],
                     });
                 }
+
+                const uploadResult = await new Promise((resolve, reject) => {
+                    const uploadStream = cloudinary.uploader.upload_stream(
+                        { folder: `ticketgo/${dir}` },
+                        (error, result) => {
+                            if (error) return reject(error);
+                            resolve(result);
+                        }
+                    );
+                    uploadStream.end(req.file.buffer);
+                });
+
+                req.file.filename = uploadResult.secure_url;
                 next();
             } catch (error) {
-                if (req.file && fs.existsSync(req.file.path)) {
-                    fs.unlinkSync(req.file.path);
-                }
                 return res.status(400).json({
                     errors: [
                         {

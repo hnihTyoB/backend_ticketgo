@@ -32,7 +32,7 @@ RUN npm install --omit=dev
 # Copy Prisma from builder
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/node_modules/@prisma/client/ ./node_modules/@prisma/client/
 
 # Copy application code
 COPY src ./src

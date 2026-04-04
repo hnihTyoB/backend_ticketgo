@@ -9,7 +9,7 @@ import {
     findAllRoles,
 } from "../services/user.service.js";
 import { generateTokenForUser } from "../services/auth.service.js";
-import fs from "fs";
+import { v2 as cloudinary } from "cloudinary";
 import { createSchema, updateSchema } from "../validation/user.schema.js";
 
 export const getAllUsers = async (req, res) => {
@@ -128,10 +128,14 @@ export const putUpdateUser = async (req, res) => {
         }
 
         if (req.file) {
-            if (currentUser && currentUser.avatar) {
-                const oldAvatarPath = `../ticket-go-ptit/public/images/user/${currentUser.avatar}`;
-                if (fs.existsSync(oldAvatarPath)) {
-                    fs.unlinkSync(oldAvatarPath);
+            if (currentUser && currentUser.avatar && currentUser.avatar.includes('cloudinary.com')) {
+                try {
+                    const avatarUrl = currentUser.avatar;
+                    const publicIdWithExt = avatarUrl.split('/').slice(-3).join('/');
+                    const publicId = publicIdWithExt.substring(0, publicIdWithExt.lastIndexOf('.'));
+                    await cloudinary.uploader.destroy(publicId);
+                } catch (error) {
+                    console.error("Lỗi xóa ảnh cũ trên Cloudinary:", error);
                 }
             }
             updateData.avatar = req.file.filename;

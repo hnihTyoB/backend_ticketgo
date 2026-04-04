@@ -15,8 +15,15 @@ import { configPassportLocal } from "./src/middlewares/passport.local.js";
 import { vnpayCallback, vnpayNotify } from "./src/controllers/cart.controller.js";
 import { startExpireOrdersTask } from "./src/tasks/expireOrders.js";
 import { startExpireCartsTask } from "./src/tasks/expireCarts.js";
+import { v2 as cloudinary } from "cloudinary";
 
 dotenv.config();
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 const app = express();
 
@@ -27,7 +34,6 @@ app.use(cors({
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-app.use("/images", express.static(path.join(__dirname, "public/images")));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
