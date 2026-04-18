@@ -475,15 +475,23 @@ export const expirePendingOrders = async (minutes = 15) => {
         if (!expired.length) return { count: 0 };
 
         await prisma.$transaction(async (tx) => {
+            // Track các cart đã xóa để tránh xóa lại cùng 1 cart (khi nhiều order cùng 1 user)
+            const deletedCartIds = new Set();
+
             for (const ord of expired) {
                 await tx.ticketOrderDetail.deleteMany({ where: { orderId: ord.id } });
 
                 await tx.ticketOrder.delete({ where: { id: ord.id } });
 
                 const cart = ord.user?.TicketCart;
-                if (cart) {
-                    await tx.ticketCartDetail.deleteMany({ where: { cartId: cart.id } });
-                    await tx.ticketCart.delete({ where: { id: cart.id } });
+                if (cart && !deletedCartIds.has(cart.id)) {
+                    // Kiểm tra cart còn tồn tại trước khi xóa
+                    const existingCart = await tx.ticketCart.findUnique({ where: { id: cart.id } });
+                    if (existingCart) {
+                        await tx.ticketCartDetail.deleteMany({ where: { cartId: cart.id } });
+                        await tx.ticketCart.delete({ where: { id: cart.id } });
+                        deletedCartIds.add(cart.id);
+                    }
                 }
             }
         });
