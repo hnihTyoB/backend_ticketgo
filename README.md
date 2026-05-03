@@ -80,10 +80,6 @@ npm run dev
 npm run server
 ```
 
-Chạy toàn bộ hệ thống (Web Admin + Server) thông qua lệnh concurrently:
-```bash
-npm run dev-web
-```
 Server sẽ chạy mặc định tại: `http://localhost:9092`
 
 ---
@@ -103,7 +99,3 @@ docker-compose up -d --build
 ```bash
 docker logs -f ticketgo-backend
 ```
-
----
-
-*Đây là dự án cá nhân được xây dựng với sự đầu tư kỹ lưỡng về kiến trúc và các công nghệ thực tế. Rất mong nhận được sự quan tâm từ nhà tuyển dụng!*
