@@ -664,11 +664,9 @@ export const momoCallback = async (req, res) => {
         const { orderId: momoOrderId, resultCode, transId, message } = req.query;
         const frontendUrl = process.env.FRONTEND_URL;
 
-        // Trích xuất orderId gốc từ momoOrderId (format: MOMO_orderId_timestamp)
         const parts = (momoOrderId || "").split("_");
         const orderId = parts.length > 1 ? Number(parts[1]) : null;
 
-        console.log(`[MoMo Callback] orderId=${orderId}, resultCode=${resultCode}, transId=${transId}`);
         if (!orderId) {
             console.error("Cannot get orderId from MoMo callback:", momoOrderId);
             return res.redirect(`${frontendUrl}/checkout?error=invalid_order`);
@@ -676,8 +674,6 @@ export const momoCallback = async (req, res) => {
 
         // resultCode=0 là thành công, khác 0 là thất bại/hủy
         if (Number(resultCode) === 0) {
-            console.log(`MoMo payment success for order ${orderId}`);
-
             const { success, error } = await completePayment(orderId, transId || momoOrderId);
 
             if (success) {
