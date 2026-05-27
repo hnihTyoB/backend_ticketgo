@@ -1,8 +1,8 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
-import dotenv from "dotenv";
 import { apiRoutes } from "./src/routes/api.js";
 import { checkValidJWT } from "./src/middlewares/jwt.js";
 import process from "process";
@@ -12,12 +12,10 @@ import { PrismaClient } from "@prisma/client";
 import passport from "passport";
 import { configPassportLocal } from "./src/middlewares/passport.local.js";
 // import { initDatabase } from "./src/config/seed.js";
-import { zalopayCallback, zalopayIPN } from "./src/controllers/cart.controller.js";
+import { zalopayCallback, zalopayIPN, momoCallback, momoIPN } from "./src/controllers/cart.controller.js";
 import { startExpireOrdersTask } from "./src/tasks/expireOrders.js";
 import { startExpireCartsTask } from "./src/tasks/expireCarts.js";
 import { v2 as cloudinary } from "cloudinary";
-
-dotenv.config();
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -65,6 +63,8 @@ configPassportLocal();
 
 app.get("/api/carts/zalopay-callback", zalopayCallback);
 app.post("/api/carts/zalopay-ipn", zalopayIPN);
+app.get("/api/carts/momo-callback", momoCallback);
+app.post("/api/carts/momo-ipn", momoIPN);
 
 startExpireOrdersTask(process.env.ZALOPAY_EXPIRES_IN_MINUTES ? parseInt(process.env.ZALOPAY_EXPIRES_IN_MINUTES) : 15);
 startExpireCartsTask(process.env.ZALOPAY_EXPIRES_IN_MINUTES ? parseInt(process.env.ZALOPAY_EXPIRES_IN_MINUTES) : 15);

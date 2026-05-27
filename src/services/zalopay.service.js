@@ -1,11 +1,6 @@
 import CryptoJS from "crypto-js";
 import axios from "axios";
 
-const ZALOPAY_APP_ID = process.env.ZALOPAY_APP_ID;
-const ZALOPAY_KEY1 = process.env.ZALOPAY_KEY1;
-const ZALOPAY_KEY2 = process.env.ZALOPAY_KEY2;
-const ZALOPAY_ENDPOINT = process.env.ZALOPAY_ENDPOINT;
-
 /**
  * Tạo URL thanh toán ZaloPay
  * @param {Object} params - Thông tin thanh toán
@@ -17,6 +12,9 @@ const ZALOPAY_ENDPOINT = process.env.ZALOPAY_ENDPOINT;
  */
 export const createZaloPayPaymentUrl = async (params) => {
     const { amount, orderId, orderInfo, returnUrl } = params;
+    const ZALOPAY_APP_ID = process.env.ZALOPAY_APP_ID;
+    const ZALOPAY_KEY1 = process.env.ZALOPAY_KEY1;
+    const ZALOPAY_ENDPOINT = process.env.ZALOPAY_ENDPOINT;
     const now = new Date();
     const yy = String(now.getFullYear()).slice(-2);
     const mm = String(now.getMonth() + 1).padStart(2, '0');
@@ -66,6 +64,7 @@ export const createZaloPayPaymentUrl = async (params) => {
  */
 export const verifyZaloPayRedirect = (query) => {
     try {
+        const ZALOPAY_KEY2 = process.env.ZALOPAY_KEY2;
         const { appid, apptransid, pmcid, bankcode, amount, discountamount, status, checksum } = query;
 
         if (!apptransid || !checksum) {
@@ -113,6 +112,7 @@ export const verifyZaloPayRedirect = (query) => {
  */
 export const verifyZaloPayCallback = (body) => {
     try {
+        const ZALOPAY_KEY2 = process.env.ZALOPAY_KEY2;
         const { data, mac } = body;
 
         if (!data || !mac) {

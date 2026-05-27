@@ -14,6 +14,7 @@ import {
     handleRetryPayment
 } from "../services/cart.service.js";
 import { createZaloPayPaymentUrl, verifyZaloPayRedirect, verifyZaloPayCallback } from "../services/zalopay.service.js";
+import { createMoMoPaymentUrl, verifyMoMoSignature } from "../services/momo.service.js";
 import process from "process";
 import {
     addToCartSchema,
@@ -382,8 +383,17 @@ export const placeOrder = async (req, res) => {
                 orderInfo: `Thanh toán đơn hàng #${orderId}`,
                 returnUrl: returnUrl,
             });
+        } else if (paymentMethod === "MOMO") {
+            const returnUrl = `${backendUrl}/api/carts/momo-callback`;
+
+            paymentUrl = await createMoMoPaymentUrl({
+                amount: calculatedTotalPrice,
+                orderId: orderId,
+                orderInfo: `Thanh toán đơn hàng #${orderId}`,
+                returnUrl: returnUrl,
+            });
         } else {
-            // Đối với các phương thức thanh toán mock khác (MOMO, VIETQR, SHOPEEPAY, CARD)
+            // Đối với các phương thức thanh toán mock khác (VIETQR, SHOPEEPAY, CARD)
             // Giả lập thanh toán thành công và chuyển hướng trực tiếp
             const frontendUrl = process.env.FRONTEND_URL;
             await completePayment(orderId, `MOCK_${paymentMethod}_${Date.now()}`);
@@ -545,7 +555,7 @@ export const zalopayCallback = async (req, res) => {
 export const retryPayment = async (req, res) => {
     const user = req.user;
     const { id } = req.params;
-    const newPaymentMethod = req.body.paymentMethod;
+    const newPaymentMethod = req.body?.paymentMethod;
 
     if (!user) {
         return res.status(401).json({ success: false, message: "Bạn chưa đăng nhập" });
@@ -571,8 +581,17 @@ export const retryPayment = async (req, res) => {
                 orderInfo: `Thanh toán lại đơn hàng #${order.id}`,
                 returnUrl: returnUrl,
             });
+        } else if (paymentMethod === "MOMO") {
+            const returnUrl = `${backendUrl}/api/carts/momo-callback`;
+
+            paymentUrl = await createMoMoPaymentUrl({
+                amount: order.totalPrice,
+                orderId: order.id,
+                orderInfo: `Thanh toán lại đơn hàng #${order.id}`,
+                returnUrl: returnUrl,
+            });
         } else {
-            // Đối với các phương thức thanh toán mock khác (MOMO, VIETQR, SHOPEEPAY, CARD)
+            // Đối với các phương thức thanh toán mock khác (VIETQR, SHOPEEPAY, CARD)
             const frontendUrl = process.env.FRONTEND_URL;
             await completePayment(order.id, `MOCK_${paymentMethod}_${Date.now()}`);
             paymentUrl = `${frontendUrl}/thanks?orderId=${order.id}`;
@@ -636,5 +655,83 @@ export const zalopayIPN = async (req, res) => {
             return_code: 2,
             return_message: error.message || "internal server error",
         });
+    }
+};
+
+export const momoCallback = async (req, res) => {
+    try {
+
+        const { orderId: momoOrderId, resultCode, transId, message } = req.query;
+        const frontendUrl = process.env.FRONTEND_URL;
+
+        // Trích xuất orderId gốc từ momoOrderId (format: MOMO_orderId_timestamp)
+        const parts = (momoOrderId || "").split("_");
+        const orderId = parts.length > 1 ? Number(parts[1]) : null;
+
+        console.log(`[MoMo Callback] orderId=${orderId}, resultCode=${resultCode}, transId=${transId}`);
+        if (!orderId) {
+            console.error("Cannot get orderId from MoMo callback:", momoOrderId);
+            return res.redirect(`${frontendUrl}/checkout?error=invalid_order`);
+        }
+
+        // resultCode=0 là thành công, khác 0 là thất bại/hủy
+        if (Number(resultCode) === 0) {
+            console.log(`MoMo payment success for order ${orderId}`);
+
+            const { success, error } = await completePayment(orderId, transId || momoOrderId);
+
+            if (success) {
+                return res.redirect(`${frontendUrl}/thanks?orderId=${orderId}`);
+            } else {
+                console.error(`Complete payment failed for order ${orderId}:`, error);
+                return res.redirect(`${frontendUrl}/checkout?error=payment_processing_failed&orderId=${orderId}`);
+            }
+        } else {
+            console.log(`MoMo payment failed or cancelled for order ${orderId}: resultCode=${resultCode}, message=${message}`);
+
+            await handlePaymentFailure(orderId);
+
+            return res.redirect(`${frontendUrl}/cancelled?orderId=${orderId}`);
+        }
+    } catch (error) {
+        console.error("MoMo callback error:", error);
+        const frontendUrl = process.env.FRONTEND_URL;
+        return res.redirect(`${frontendUrl}/checkout?error=callback_error`);
+    }
+};
+
+export const momoIPN = async (req, res) => {
+    try {
+        const verifyResult = verifyMoMoSignature(req.body);
+
+        if (!verifyResult.isVerified) {
+            console.error("MoMo IPN verification failed:", verifyResult.message);
+            return res.status(400).json({ success: false, message: verifyResult.message });
+        }
+
+        const orderId = verifyResult.orderId ? Number(verifyResult.orderId) : null;
+
+        if (!orderId) {
+            console.error("Cannot extract orderId from MoMo IPN data");
+            return res.status(400).json({ success: false, message: "Invalid orderId" });
+        }
+
+        if (verifyResult.isSuccess) {
+            console.log(`MoMo IPN received success for order ${orderId}, transaction: ${verifyResult.transactionRef}`);
+            const { success, error } = await completePayment(orderId, verifyResult.transactionRef);
+
+            if (!success) {
+                console.error(`MoMo IPN: Complete payment failed for order ${orderId}:`, error);
+                return res.status(500).json({ success: false, message: error });
+            }
+        } else {
+            console.log(`MoMo IPN received failure for order ${orderId}:`, verifyResult.message);
+            await handlePaymentFailure(orderId);
+        }
+
+        return res.status(200).json({ success: true, message: "Success" });
+    } catch (error) {
+        console.error("MoMo IPN error:", error);
+        return res.status(500).json({ success: false, message: error.message });
     }
 };

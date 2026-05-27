@@ -10,7 +10,7 @@ Dự án này là một phần của hệ sinh thái TicketGo, cung cấp các R
 - **Database & ORM**: MySQL, Prisma ORM
 - **Authentication**: Passport.js (Local Strategy), Express Session lưu trữ trên Database (Prisma Session Store).
 - **Validation**: Zod (Kiểm tra chặt chẽ payload từ request)
-- **Thanh toán (Payment Gateway)**: Tích hợp VNPay
+- **Thanh toán (Payment Gateway)**: Tích hợp ZaloPay, MoMo
 - **Lưu trữ ảnh (Storage)**: Cloudinary, Multer
 - **Gửi Email**: Nodemailer (Gửi email xác nhận đặt vé, OTP)
 - **Tác vụ định kỳ (Cron Jobs)**: Node-cron (Tự động cập nhật trạng thái sự kiện, vé)
@@ -20,7 +20,7 @@ Dự án này là một phần của hệ sinh thái TicketGo, cung cấp các R
 
 - **Xác thực & Phân quyền**: Đăng nhập/Đăng ký, bảo mật session, phân quyền Role (Admin, User, Organizer).
 - **Quản lý Sự kiện & Vé**: CRUD sự kiện, quản lý hạng vé, tồn kho (inventory).
-- **Thanh toán VNPay**: Tạo URL thanh toán, xử lý IPN/Callback từ VNPay và cập nhật trạng thái đơn hàng an toàn.
+- **Thanh toán ZaloPay**: Tạo URL thanh toán, xử lý IPN/Callback từ ZaloPay và cập nhật trạng thái đơn hàng an toàn.
 - **Email Notifications**: Gửi vé QR Code và thông báo hóa đơn qua email tự động sau khi thanh toán thành công.
 - **Xử lý Ảnh**: Upload và quản lý ảnh sự kiện, avatar người dùng qua Cloudinary.
 - **Cron Jobs**: Tự động quét và cập nhật trạng thái các sự kiện đã quá hạn hoặc thay đổi trạng thái vé.
@@ -53,11 +53,11 @@ CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 
-# VNPay (Nếu có)
-VNP_TMNCODE=your_vnp_tmncode
-VNP_HASHSECRET=your_vnp_hashsecret
-VNP_URL=your_vnp_url
-VNP_RETURNURL=your_vnp_returnurl
+# ZaloPay (Nếu có)
+ZALOPAY_APP_ID=your_app_id
+ZALOPAY_KEY1=your_key1
+ZALOPAY_KEY2=your_key2
+ZALOPAY_ENDPOINT=your_endpoint
 ```
 
 ### 4. Khởi tạo Database (Prisma)
