@@ -542,8 +542,8 @@ export const handleRetryPayment = async (orderId, userId) => {
             where: {
                 id: Number(orderId),
                 userId: Number(userId),
-                status: 'PENDING',
-                paymentStatus: 'UNPAID',
+                status: { in: ['PENDING', 'CANCELLED'] },
+                paymentStatus: { in: ['UNPAID', 'FAILED'] },
             },
             include: {
                 ticketOrderDetails: {
@@ -576,7 +576,26 @@ export const handleRetryPayment = async (orderId, userId) => {
             }
         }
 
-        return { order, error: null };
+        // Cập nhật lại trạng thái đơn hàng về PENDING và UNPAID để sẵn sàng thanh toán lại
+        const updatedOrder = await prisma.ticketOrder.update({
+            where: { id: order.id },
+            data: {
+                status: 'PENDING',
+                paymentStatus: 'UNPAID',
+                createdAt: new Date(), // Làm mới thời gian tạo để có thêm 15 phút thanh toán
+            },
+            include: {
+                ticketOrderDetails: {
+                    include: {
+                        ticketType: {
+                            include: { event: true }
+                        }
+                    }
+                }
+            }
+        });
+
+        return { order: updatedOrder, error: null };
 
     } catch (error) {
         console.error("handleRetryPayment error:", error);

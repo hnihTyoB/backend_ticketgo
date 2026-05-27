@@ -13,7 +13,7 @@ import {
     clearCart,
     handleRetryPayment
 } from "../services/cart.service.js";
-import { createPaymentUrl, verifyReturnUrl } from "../services/vnpay.service.js";
+import { createZaloPayPaymentUrl, verifyZaloPayRedirect, verifyZaloPayCallback } from "../services/zalopay.service.js";
 import process from "process";
 import {
     addToCartSchema,
@@ -351,6 +351,8 @@ export const placeOrder = async (req, res) => {
         const cartDetails = await ticketTypeInCart(user.id);
         const calculatedTotalPrice = calculateCartTotal(cartDetails);
 
+        const paymentMethod = req.body.paymentMethod || "ZALOPAY";
+
         // Tạo order tạm thời
         const { orderId, error } = await handlePlaceOrder(
             user.id,
@@ -358,7 +360,7 @@ export const placeOrder = async (req, res) => {
             req.body.receiverPhone,
             req.body.receiverEmail,
             calculatedTotalPrice,
-            req.body.paymentMethod,
+            paymentMethod,
         );
 
         if (error) {
@@ -368,17 +370,25 @@ export const placeOrder = async (req, res) => {
             });
         }
 
-        const clientIp = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || "127.0.0.1";
+        let paymentUrl = null;
         const backendUrl = process.env.BACKEND_URL;
-        const returnUrl = `${backendUrl}/api/carts/vnpay-callback`;
 
-        const paymentUrl = createPaymentUrl({
-            amount: calculatedTotalPrice,
-            orderId: orderId,
-            orderInfo: `Thanh toán đơn hàng #${orderId}`,
-            ipAddr: clientIp,
-            returnUrl: returnUrl,
-        });
+        if (paymentMethod === "ZALOPAY") {
+            const returnUrl = `${backendUrl}/api/carts/zalopay-callback`;
+
+            paymentUrl = await createZaloPayPaymentUrl({
+                amount: calculatedTotalPrice,
+                orderId: orderId,
+                orderInfo: `Thanh toán đơn hàng #${orderId}`,
+                returnUrl: returnUrl,
+            });
+        } else {
+            // Đối với các phương thức thanh toán mock khác (MOMO, VIETQR, SHOPEEPAY, CARD)
+            // Giả lập thanh toán thành công và chuyển hướng trực tiếp
+            const frontendUrl = process.env.FRONTEND_URL;
+            await completePayment(orderId, `MOCK_${paymentMethod}_${Date.now()}`);
+            paymentUrl = `${frontendUrl}/thanks?orderId=${orderId}`;
+        }
 
         return res.status(200).json({
             success: true,
@@ -426,26 +436,20 @@ export const getThanks = async (req, res) => {
     });
 };
 
-export const vnpayCallback = async (req, res) => {
+export const zalopayCallback = async (req, res) => {
     try {
-        const verifyResult = verifyReturnUrl(req.query);
+        const verifyResult = verifyZaloPayRedirect(req.query);
 
-        if (!verifyResult.isVerified) {
-            console.error("VNPAY callback verification failed:", verifyResult);
-            const frontendUrl = process.env.FRONTEND_URL;
-            return res.redirect(`${frontendUrl}/checkout?error=verification_failed`);
-        }
-
-        const orderId = verifyResult.transactionRef ? Number(verifyResult.transactionRef) : null;
+        const orderId = verifyResult.orderId ? Number(verifyResult.orderId) : null;
         const frontendUrl = process.env.FRONTEND_URL;
 
         if (!orderId) {
-            console.error("Cannot get orderId from VNPAY callback");
+            console.error("Cannot get orderId from ZaloPay callback");
             return res.redirect(`${frontendUrl}/checkout?error=invalid_order`);
         }
 
         if (verifyResult.isSuccess) {
-            console.log(`Payment success for order ${orderId}`);
+            console.log(`ZaloPay payment success for order ${orderId}`);
 
             const { success, error } = await completePayment(orderId, verifyResult.transactionRef);
 
@@ -456,71 +460,123 @@ export const vnpayCallback = async (req, res) => {
                 return res.redirect(`${frontendUrl}/checkout?error=payment_processing_failed&orderId=${orderId}`);
             }
         } else {
-            console.log(`Payment failed for order ${orderId}:`, verifyResult.message);
+            console.log(`ZaloPay payment failed or cancelled for order ${orderId}:`, verifyResult.message);
 
             await handlePaymentFailure(orderId);
 
             return res.redirect(`${frontendUrl}/cancelled?orderId=${orderId}`);
         }
     } catch (error) {
-        console.error("VNPAY callback error:", error);
+        console.error("ZaloPay callback error:", error);
         const frontendUrl = process.env.FRONTEND_URL;
         return res.redirect(`${frontendUrl}/checkout?error=callback_error`);
     }
 };
 
-export const vnpayNotify = async (req, res) => {
-    try {
-        const query = Object.keys(req.query).length ? req.query : req.body;
-        const verifyResult = verifyReturnUrl(query);
+// export const vnpayCallback = async (req, res) => {
+//     try {
+//         const verifyResult = verifyReturnUrl(req.query);
 
-        if (!verifyResult.isVerified) {
-            console.error('VNPAY notify verification failed:', verifyResult);
-            return res.status(400).send('Invalid signature');
-        }
+//         if (!verifyResult.isVerified) {
+//             console.error("VNPAY callback verification failed:", verifyResult);
+//             const frontendUrl = process.env.FRONTEND_URL;
+//             return res.redirect(`${frontendUrl}/checkout?error=verification_failed`);
+//         }
 
-        const orderId = verifyResult.transactionRef ? Number(verifyResult.transactionRef) : null;
-        if (!orderId) return res.status(400).send('Invalid order');
+//         const orderId = verifyResult.transactionRef ? Number(verifyResult.transactionRef) : null;
+//         const frontendUrl = process.env.FRONTEND_URL;
 
-        if (verifyResult.isSuccess) {
-            await completePayment(orderId, verifyResult.transactionRef);
-        } else {
-            await handlePaymentFailure(orderId);
-        }
+//         if (!orderId) {
+//             console.error("Cannot get orderId from VNPAY callback");
+//             return res.redirect(`${frontendUrl}/checkout?error=invalid_order`);
+//         }
 
-        return res.status(200).send('OK');
-    } catch (error) {
-        console.error('VNPAY notify error:', error);
-        return res.status(500).send('ERROR');
-    }
-};
+//         if (verifyResult.isSuccess) {
+//             console.log(`Payment success for order ${orderId}`);
+
+//             const { success, error } = await completePayment(orderId, verifyResult.transactionRef);
+
+//             if (success) {
+//                 return res.redirect(`${frontendUrl}/thanks?orderId=${orderId}`);
+//             } else {
+//                 console.error(`Complete payment failed for order ${orderId}:`, error);
+//                 return res.redirect(`${frontendUrl}/checkout?error=payment_processing_failed&orderId=${orderId}`);
+//             }
+//         } else {
+//             console.log(`Payment failed for order ${orderId}:`, verifyResult.message);
+
+//             await handlePaymentFailure(orderId);
+
+//             return res.redirect(`${frontendUrl}/cancelled?orderId=${orderId}`);
+//         }
+//     } catch (error) {
+//         console.error("VNPAY callback error:", error);
+//         const frontendUrl = process.env.FRONTEND_URL;
+//         return res.redirect(`${frontendUrl}/checkout?error=callback_error`);
+//     }
+// };
+
+// export const vnpayNotify = async (req, res) => {
+//     try {
+//         const query = Object.keys(req.query).length ? req.query : req.body;
+//         const verifyResult = verifyReturnUrl(query);
+
+//         if (!verifyResult.isVerified) {
+//             console.error('VNPAY notify verification failed:', verifyResult);
+//             return res.status(400).send('Invalid signature');
+//         }
+
+//         const orderId = verifyResult.transactionRef ? Number(verifyResult.transactionRef) : null;
+//         if (!orderId) return res.status(400).send('Invalid order');
+
+//         if (verifyResult.isSuccess) {
+//             await completePayment(orderId, verifyResult.transactionRef);
+//         } else {
+//             await handlePaymentFailure(orderId);
+//         }
+
+//         return res.status(200).send('OK');
+//     } catch (error) {
+//         console.error('VNPAY notify error:', error);
+//         return res.status(500).send('ERROR');
+//     }
+// };
 
 export const retryPayment = async (req, res) => {
     const user = req.user;
     const { id } = req.params;
+    const newPaymentMethod = req.body.paymentMethod;
 
     if (!user) {
         return res.status(401).json({ success: false, message: "Bạn chưa đăng nhập" });
     }
 
     try {
-        const { order, error } = await handleRetryPayment(id, user.id);
+        const { order, error } = await handleRetryPayment(id, user.id, newPaymentMethod);
 
         if (error) {
             return res.status(400).json({ success: false, message: error });
         }
 
-        const clientIp = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || "127.0.0.1";
+        let paymentUrl = null;
         const backendUrl = process.env.BACKEND_URL;
-        const returnUrl = `${backendUrl}/api/carts/vnpay-callback`;
+        const paymentMethod = order.paymentMethod || "ZALOPAY";
 
-        const paymentUrl = createPaymentUrl({
-            amount: order.totalPrice,
-            orderId: order.id,
-            orderInfo: `Thanh toán lại đơn hàng #${order.id}`,
-            ipAddr: clientIp,
-            returnUrl: returnUrl,
-        });
+        if (paymentMethod === "ZALOPAY") {
+            const returnUrl = `${backendUrl}/api/carts/zalopay-callback`;
+
+            paymentUrl = await createZaloPayPaymentUrl({
+                amount: order.totalPrice,
+                orderId: order.id,
+                orderInfo: `Thanh toán lại đơn hàng #${order.id}`,
+                returnUrl: returnUrl,
+            });
+        } else {
+            // Đối với các phương thức thanh toán mock khác (MOMO, VIETQR, SHOPEEPAY, CARD)
+            const frontendUrl = process.env.FRONTEND_URL;
+            await completePayment(order.id, `MOCK_${paymentMethod}_${Date.now()}`);
+            paymentUrl = `${frontendUrl}/thanks?orderId=${order.id}`;
+        }
 
         return res.status(200).json({
             success: true,
@@ -532,5 +588,53 @@ export const retryPayment = async (req, res) => {
     } catch (error) {
         console.error("RetryPayment error:", error);
         return res.status(500).json({ success: false, message: "Lỗi khi thử thanh toán lại." });
+    }
+};
+
+export const zalopayIPN = async (req, res) => {
+    try {
+        const verifyResult = verifyZaloPayCallback(req.body);
+
+        if (!verifyResult.isVerified) {
+            console.error("ZaloPay IPN verification failed:", verifyResult.message);
+            return res.status(400).json({
+                return_code: 2,
+                return_message: verifyResult.message || "mac mismatch",
+            });
+        }
+
+        const orderId = verifyResult.orderId ? Number(verifyResult.orderId) : null;
+
+        if (!orderId) {
+            console.error("Cannot extract orderId from ZaloPay IPN data");
+            return res.status(400).json({
+                return_code: 2,
+                return_message: "invalid order id",
+            });
+        }
+
+        console.log(`ZaloPay IPN received for order ${orderId}, transaction: ${verifyResult.zpTransId}`);
+
+        // Hoàn thành đơn hàng
+        const { success, error } = await completePayment(orderId, String(verifyResult.zpTransId));
+
+        if (success) {
+            return res.status(200).json({
+                return_code: 1,
+                return_message: "success",
+            });
+        } else {
+            console.error(`ZaloPay IPN: Complete payment failed for order ${orderId}:`, error);
+            return res.status(500).json({
+                return_code: 2,
+                return_message: error || "payment completion failed",
+            });
+        }
+    } catch (error) {
+        console.error("ZaloPay IPN error:", error);
+        return res.status(500).json({
+            return_code: 2,
+            return_message: error.message || "internal server error",
+        });
     }
 };

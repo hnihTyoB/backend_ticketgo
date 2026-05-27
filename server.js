@@ -12,7 +12,7 @@ import { PrismaClient } from "@prisma/client";
 import passport from "passport";
 import { configPassportLocal } from "./src/middlewares/passport.local.js";
 // import { initDatabase } from "./src/config/seed.js";
-import { vnpayCallback, vnpayNotify } from "./src/controllers/cart.controller.js";
+import { zalopayCallback, zalopayIPN } from "./src/controllers/cart.controller.js";
 import { startExpireOrdersTask } from "./src/tasks/expireOrders.js";
 import { startExpireCartsTask } from "./src/tasks/expireCarts.js";
 import { v2 as cloudinary } from "cloudinary";
@@ -63,11 +63,11 @@ app.use(passport.authenticate('session'));
 
 configPassportLocal();
 
-app.get("/api/carts/vnpay-callback", vnpayCallback);
-app.post("/api/carts/vnpay-notify", vnpayNotify);
+app.get("/api/carts/zalopay-callback", zalopayCallback);
+app.post("/api/carts/zalopay-ipn", zalopayIPN);
 
-startExpireOrdersTask(process.env.VNPAY_EXPIRES_IN_MINUTES ? parseInt(process.env.VNPAY_EXPIRES_IN_MINUTES) : 15);
-startExpireCartsTask(process.env.VNPAY_EXPIRES_IN_MINUTES ? parseInt(process.env.VNPAY_EXPIRES_IN_MINUTES) : 15);
+startExpireOrdersTask(process.env.ZALOPAY_EXPIRES_IN_MINUTES ? parseInt(process.env.ZALOPAY_EXPIRES_IN_MINUTES) : 15);
+startExpireCartsTask(process.env.ZALOPAY_EXPIRES_IN_MINUTES ? parseInt(process.env.ZALOPAY_EXPIRES_IN_MINUTES) : 15);
 
 app.use("/api", checkValidJWT);
 
