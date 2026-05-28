@@ -26,7 +26,6 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/ticketgo-backend:latest
-
   deploy:
     name: Deploy to VPS
     runs-on: ubuntu-latest
@@ -43,7 +42,7 @@ jobs:
             docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/ticketgo-backend:latest
             
             # 2. Di chuyển vào thư mục chứa docker-compose trên VPS
-            cd /app/ticketgo/docker/backend
+            cd /opt/BanVe/docker/backend
             
             # 3. Cập nhật dịch vụ backend với ảnh Docker mới
             docker compose up -d --no-deps backend
