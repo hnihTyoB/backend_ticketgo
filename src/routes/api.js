@@ -2,7 +2,7 @@ import express from "express";
 import { postCreateUser, getAllUsers, getUserById, putUpdateUser, deleteUser, getAllRoles } from "../controllers/user.controller.js";
 import { deleteEvent, getAllEventsWithFilter, getEventById, postCreateEvent, putUpdateEvent } from "../controllers/event.controller.js";
 import { getAllOrders, getOrderById, getOrderHistory, getPendingTicketsCount, putUpdateStatus } from "../controllers/order.controller.js";
-import { userLogin, userLogout, userRegister } from "../controllers/auth.controller.js";
+import { userLogin, userLogout, userRegister, getCurrentUser, userRefreshToken } from "../controllers/auth.controller.js";
 import { addTicketToCart, checkOut, getCart, getThanks, handleCartToCheckout, placeOrder, removeTicketFromCart, updateQuantity, clearCartHandler, addMultipleTicketsToCart, retryPayment } from "../controllers/cart.controller.js";
 import { getDashboard, getCharts } from "../controllers/dashboard.controller.js";
 import { getTicketTypesByEvent, postCreateTicketTypeById, putUpdateTicketTypeById, deleteTicketTypeById, putUpdateTicketSoldById } from "../controllers/ticket.controller.js";
@@ -15,6 +15,8 @@ export const apiRoutes = (app) => {
     authRouter.post("/login", userLogin);
     authRouter.post("/register", userRegister);
     authRouter.post("/logout", userLogout);
+    authRouter.get("/me", getCurrentUser);
+    authRouter.post("/refresh", userRefreshToken);
 
     const userRouter = express.Router();
     userRouter.get("/", isAdmin, getAllUsers);

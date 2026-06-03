@@ -25,7 +25,9 @@ model User {
     gender      String?   @db.VarChar(10) // "Nam", "Nữ", "Khác"
     avatar      String?   @db.VarChar(255)
     accountType String    @default("SYSTEM") @db.VarChar(50)
-
+    login_attempts Int @default(0)
+    locked_until DateTime?
+    
     role        Role          @relation(fields: [roleId], references: [id])
     roleId      Int
     TicketCart  TicketCart?

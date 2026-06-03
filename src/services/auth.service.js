@@ -14,19 +14,7 @@ export const comparePassword = async (plainText, hashedPassword) => {
   return await bcrypt.compare(plainText, hashedPassword);
 };
 
-export const handleUserLogin = async (identifier, password) => {
-  const user = await prisma.user.findFirst({
-    where: {
-      OR: [{ email: identifier }, { phone: identifier }],
-    },
-    include: { role: true },
-  });
-
-  if (!user) throw new Error(`Tên đăng nhập hoặc mật khẩu không đúng`);
-
-  const isMatch = await comparePassword(password, user.password);
-  if (!isMatch) throw new Error("Tên đăng nhập hoặc mật khẩu không đúng");
-
+export const generateAccessToken = (user) => {
   const payload = {
     id: user.id,
     fullName: user.fullName,
@@ -42,9 +30,39 @@ export const handleUserLogin = async (identifier, password) => {
   const secret = process.env.JWT_SECRET;
   if (!secret) throw new Error("JWT_SECRET is not defined in the .env file");
 
-  const expiresIn = process.env.JWT_EXPIRES_IN || "7d";
+  const expiresIn = process.env.JWT_ACCESS_EXPIRES_IN || "30m";
 
   return jwt.sign(payload, secret, { expiresIn });
+};
+
+export const generateRefreshToken = (user) => {
+  const payload = {
+    id: user.id,
+  };
+
+  const secret = process.env.JWT_REFRESH_SECRET || (process.env.JWT_SECRET ? process.env.JWT_SECRET + "_refresh" : "refresh_secret");
+  const expiresIn = process.env.JWT_REFRESH_EXPIRES_IN || "7d";
+
+  return jwt.sign(payload, secret, { expiresIn });
+};
+
+export const handleUserLogin = async (identifier, password) => {
+  const user = await prisma.user.findFirst({
+    where: {
+      OR: [{ email: identifier }, { phone: identifier }],
+    },
+    include: { role: true },
+  });
+
+  if (!user) throw new Error(`Tên đăng nhập hoặc mật khẩu không đúng`);
+
+  const isMatch = await comparePassword(password, user.password);
+  if (!isMatch) throw new Error("Tên đăng nhập hoặc mật khẩu không đúng");
+
+  const accessToken = generateAccessToken(user);
+  const refreshToken = generateRefreshToken(user);
+
+  return { accessToken, refreshToken, user };
 };
 
 export const isEmailExist = async (email, excludeUserId = null) => {
@@ -112,23 +130,5 @@ export const countUserSumCart = async (userId) => {
 export const generateTokenForUser = async (userId) => {
   const user = await findUserWithRoleById(userId);
   if (!user) throw new Error("User not found");
-
-  const payload = {
-    id: user.id,
-    fullName: user.fullName,
-    phone: user.phone,
-    email: user.email,
-    birthDate: user.birthDate,
-    gender: user.gender,
-    avatar: user.avatar,
-    accountType: user.accountType,
-    role: user.role,
-  };
-
-  const secret = process.env.JWT_SECRET;
-  if (!secret) throw new Error("JWT_SECRET is not defined in the .env file");
-
-  const expiresIn = process.env.JWT_EXPIRES_IN || "7d";
-
-  return jwt.sign(payload, secret, { expiresIn });
+  return generateAccessToken(user);
 };
