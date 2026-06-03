@@ -7,6 +7,7 @@ export const checkValidJWT = (req, res, next) => {
         "/auth/register",
         "/auth/google",
         "/auth/google/callback",
+        "/auth/refresh",
     ];
 
     const publicGetPaths = ["/events"];
@@ -18,8 +19,23 @@ export const checkValidJWT = (req, res, next) => {
         return next();
     }
 
-    const authHeader = req.headers["authorization"];
-    const token = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
+    let token = null;
+
+    // 1. Đọc token từ cookie
+    if (req.headers.cookie) {
+        const cookies = req.headers.cookie.split(";").reduce((acc, cookie) => {
+            const [key, val] = cookie.trim().split("=");
+            acc[key] = val;
+            return acc;
+        }, {});
+        token = cookies.token;
+    }
+
+    // 2. Fallback đọc từ Authorization header nếu không có cookie
+    if (!token) {
+        const authHeader = req.headers["authorization"];
+        token = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
+    }
 
     if (!token) {
         return res.status(401).json({
