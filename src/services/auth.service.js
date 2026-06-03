@@ -56,8 +56,46 @@ export const handleUserLogin = async (identifier, password) => {
 
   if (!user) throw new Error(`Tên đăng nhập hoặc mật khẩu không đúng`);
 
+  // Bước 1: Kiểm tra khóa tài khoản
+  if (user.locked_until && user.locked_until > new Date()) {
+    const diffMs = user.locked_until.getTime() - new Date().getTime();
+    const diffMins = Math.ceil(diffMs / (60 * 1000));
+    throw new Error(`Tài khoản đang bị tạm khóa. Vui lòng quay lại sau ${diffMins} phút.`);
+  }
+
   const isMatch = await comparePassword(password, user.password);
-  if (!isMatch) throw new Error("Tên đăng nhập hoặc mật khẩu không đúng");
+
+  // Bước 2 & 3: Sai mật khẩu -> tăng số lần sai và khóa nếu quá 5 lần
+  if (!isMatch) {
+    const newAttempts = user.login_attempts + 1;
+    const updateData = { login_attempts: newAttempts };
+
+    if (newAttempts >= 5) {
+      updateData.locked_until = new Date(Date.now() + 15 * 60 * 1000); // Khóa 15 phút
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: updateData,
+    });
+
+    if (newAttempts >= 5) {
+      throw new Error("Mật khẩu không đúng. Bạn đã nhập sai quá 5 lần, tài khoản bị tạm khóa 15 phút.");
+    } else {
+      throw new Error(`Tên đăng nhập hoặc mật khẩu không đúng. Bạn còn thử lại được ${5 - newAttempts} lần.`);
+    }
+  }
+
+  // Bước 4: Mật khẩu đúng -> reset login_attempts và locked_until
+  if (user.login_attempts > 0 || user.locked_until) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        login_attempts: 0,
+        locked_until: null,
+      },
+    });
+  }
 
   const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user);
