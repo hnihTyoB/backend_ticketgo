@@ -26,7 +26,7 @@ cloudinary.config({
 const app = express();
 
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:8888', 'https://fe-ticketgo.vercel.app'],
+    origin: ['http://localhost:5173', 'http://localhost:8888', 'https://fe-ticketgo.vercel.app', 'https://thinher.io.vn'],
     credentials: true,
 }));
 
@@ -69,6 +69,9 @@ app.post("/api/carts/momo-ipn", momoIPN);
 startExpireOrdersTask(process.env.ZALOPAY_EXPIRES_IN_MINUTES ? parseInt(process.env.ZALOPAY_EXPIRES_IN_MINUTES) : 15);
 startExpireCartsTask(process.env.ZALOPAY_EXPIRES_IN_MINUTES ? parseInt(process.env.ZALOPAY_EXPIRES_IN_MINUTES) : 15);
 
+app.get("/health", (req, res) => {
+    res.status(200).send("OK");
+});
 app.use("/api", checkValidJWT);
 
 apiRoutes(app);
