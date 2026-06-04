@@ -22,7 +22,7 @@ export const userLogin = async (req, res) => {
         }
         const { accessToken, refreshToken, user } = loginResult;
 
-        // Ghi Access Token vào cookie 'token' (hạn ngắn, ví dụ 15 phút)
+        // Ghi Access Token vào cookie 'token'
         res.cookie("token", accessToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
@@ -30,7 +30,7 @@ export const userLogin = async (req, res) => {
             maxAge: 30 * 60 * 1000 // 30 phút
         });
 
-        // Ghi Refresh Token vào cookie 'refreshToken' (hạn dài, ví dụ 7 ngày)
+        // Ghi Refresh Token vào cookie 'refreshToken'
         res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
