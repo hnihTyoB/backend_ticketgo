@@ -6,11 +6,11 @@ export const userUploadMiddleware = (
     fieldName,
     dir,
     {
-        maxWidth = 512,
-        maxHeight = 512,
+        maxWidth = 1920,
+        maxHeight = 1080,
         minWidth = 100,
         minHeight = 100,
-        maxFileSize = 1
+        maxFileSize = 3
     } = {}
 ) => {
     return (req, res, next) => {

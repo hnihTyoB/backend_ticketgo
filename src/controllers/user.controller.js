@@ -9,7 +9,7 @@ import {
     findAllRoles,
 } from "../services/user.service.js";
 import { generateTokenForUser } from "../services/auth.service.js";
-import { v2 as cloudinary } from "cloudinary";
+import { destroyCloudinaryImage } from "../config/cloudinary.js";
 import { createSchema, updateSchema } from "../validation/user.schema.js";
 
 export const getAllUsers = async (req, res) => {
@@ -128,16 +128,7 @@ export const putUpdateUser = async (req, res) => {
         }
 
         if (req.file) {
-            if (currentUser && currentUser.avatar && currentUser.avatar.includes('cloudinary.com')) {
-                try {
-                    const avatarUrl = currentUser.avatar;
-                    const publicIdWithExt = avatarUrl.split('/').slice(-3).join('/');
-                    const publicId = publicIdWithExt.substring(0, publicIdWithExt.lastIndexOf('.'));
-                    await cloudinary.uploader.destroy(publicId);
-                } catch (error) {
-                    console.error("Lỗi xóa ảnh cũ trên Cloudinary:", error);
-                }
-            }
+            await destroyCloudinaryImage(currentUser.avatar);
             updateData.avatar = req.file.filename;
         }
 
@@ -165,6 +156,10 @@ export const putUpdateUser = async (req, res) => {
 
 export const deleteUser = async (req, res) => {
     try {
+        const user = await findUserById(req.params.id);
+        if (!user) return res.status(404).json({ error: "Không tìm thấy người dùng" });
+
+        await destroyCloudinaryImage(user.avatar);
         await removeUser(req.params.id);
         res.json({ message: "Xóa người dùng thành công" });
     } catch (err) {
