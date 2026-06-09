@@ -9,6 +9,7 @@ import {
     updateEvent
 } from "../services/event.service.js";
 import { eventSchema } from "../validation/event.schema.js";
+import { destroyCloudinaryImage } from "../config/cloudinary.js";
 
 export const getAllEvents = async (req, res) => {
     try {
@@ -124,6 +125,7 @@ export const putUpdateEvent = async (req, res) => {
         let bannerUrl = existingEvent.bannerUrl || null;
 
         if (req.file) {
+            await destroyCloudinaryImage(existingEvent.bannerUrl);
             bannerUrl = req.file.filename;
         }
 
@@ -165,6 +167,10 @@ export const putUpdateEvent = async (req, res) => {
 
 export const deleteEvent = async (req, res) => {
     try {
+        const event = await findEventById(req.params.id);
+        if (!event) return res.status(404).json({ error: "Không tìm thấy sự kiện" });
+
+        await destroyCloudinaryImage(event.bannerUrl);
         await removeEvent(req.params.id);
         res.json({ message: "Xóa sự kiện thành công" });
     } catch (err) {
